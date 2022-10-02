@@ -39,8 +39,6 @@ typedef struct
 {
     CPU cpu;
     Memory mem;
-    Display dis;
-    Key kp;
 } Chip8;
 
 typedef void (*OpcodeFn)(void);

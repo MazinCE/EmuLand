@@ -1,4 +1,4 @@
-#include "../include/chip8.h"
+#include "chip8.h"
 #include <unistd.h>
 #include <time.h>
 

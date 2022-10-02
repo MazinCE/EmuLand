@@ -1,6 +1,6 @@
-#include "../include/display.h"
+#include "display.h"
 
-static Display g_dis;
+Display g_dis;
 
 void Display_Init(void)
 {

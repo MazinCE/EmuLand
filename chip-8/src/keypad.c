@@ -1,6 +1,6 @@
-#include "../include/keypad.h"
+#include "keypad.h"
 
-static Key g_Keypad[KEY_COUNT];
+Key g_Keypad[KEY_COUNT];
 
 void Keypad_Init()
 {
