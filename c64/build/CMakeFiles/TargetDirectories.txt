@@ -1,0 +1,3 @@
+/home/mazin/Documents/dev/c/emulators/C64/build/CMakeFiles/rebuild_cache.dir
+/home/mazin/Documents/dev/c/emulators/C64/build/CMakeFiles/edit_cache.dir
+/home/mazin/Documents/dev/c/emulators/C64/build/CMakeFiles/C64.dir

@@ -1,0 +1,87 @@
+[
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/CIA/CIA.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/CIA/CIA.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/CIA/CIA.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/CIA/IntervalTimer.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/CIA/IntervalTimer.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/CIA/IntervalTimer.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/Memory/Memory.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/Memory/Memory.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/Memory/Memory.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/VIC/vic.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/VIC/vic_border.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic_border.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic_border.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/VIC/vic_graphics.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic_graphics.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic_graphics.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/VIC/vic_sprite.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic_sprite.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/VIC/vic_sprite.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/CPU/cpu.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/CPU/cpu.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/CPU/cpu.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/CPU/addr_modes.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/CPU/addr_modes.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/CPU/addr_modes.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/CPU/instructions.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/CPU/instructions.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/CPU/instructions.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/CPU/instruction_table.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/CPU/instruction_table.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/CPU/instruction_table.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/Keyboard/Keyboard.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/Keyboard/Keyboard.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/Keyboard/Keyboard.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/joystick/joystick.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/joystick/joystick.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/joystick/joystick.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/Display/Display.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/Display/Display.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/Display/Display.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/c64bus.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/c64bus.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/c64bus.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/C64.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/C64.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/C64.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/c/emulators/C64/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/C64.dir/src/main.c.o -c /home/mazin/Documents/dev/c/emulators/C64/src/main.c",
+  "file": "/home/mazin/Documents/dev/c/emulators/C64/src/main.c"
+}
+]
