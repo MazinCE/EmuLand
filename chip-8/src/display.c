@@ -28,6 +28,8 @@ void Display_Init(void)
     SDL_RenderSetScale(g_dis.ren,
                        SDL_SCREEN_WIDTH / CHIP8_SCREEN_WIDTH,
                        SDL_SCREEN_HEIGHT / CHIP8_SCREEN_HEIGHT);
+
+    g_dis.dirty = false;
 }
 
 void Display_Destroy(void)
@@ -54,7 +56,7 @@ void Display_Render(void)
         SDL_RenderCopy(g_dis.ren, g_dis.scr, 0, 0);
         SDL_RenderPresent(g_dis.ren);
 
-        g_dis.dirty = 0;
+        g_dis.dirty = false;
     }
 }
 
@@ -75,5 +77,5 @@ void Display_SetPixel(uint8_t x, uint8_t y, uint32_t val)
 
 void Display_SetDirty(void)
 {
-    g_dis.dirty = 1;
+    g_dis.dirty = true;
 }

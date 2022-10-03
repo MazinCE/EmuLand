@@ -2,23 +2,106 @@
 
 void CPU_CreateInstructionTable(void)
 {
-    g_cpu.instruction_table[0x01] = {
+    Instruction nop = {
+        .size = 1,
+        .cycles_min = 1,
+        .cycles_max = 1,
+        .execute = &NOP,
+    };
+
+    g_cpu.instruction_table[0x00] = nop;
+
+    Instruction lxib = {
         .size = 2,
+        .cycles_min = 10,
+        .cycles_max = 10,
+        .execute = &LXIB,
+    };
+
+    g_cpu.instruction_table[0x01] = lxib;
+
+    Instruction staxb = {
+        .size = 1,
+        .cycles_min = 7,
+        .cycles_max = 7,
+        .execute = &STAXB,
+    };
+
+    g_cpu.instruction_table[0x02] = staxb;
+
+    Instruction inxb = {
+        .size = 1,
+        .cycles_min = 5,
+        .cycles_max = 5,
+        .execute = &INXB,
+    };
+
+    g_cpu.instruction_table[0x03] = inxb;
+
+    Instruction inrb = {
+        .size = 1,
+        .cycles_min = 5,
+        .cycles_max = 5,
+        .execute = &INRB,
+    };
+
+    g_cpu.instruction_table[0x04] = inrb;
+
+    Instruction dcrb = {
+        .size = 1,
+        .cycles_min = 5,
+        .cycles_max = 5,
+        .execute = &DCRB,
+    };
+
+    g_cpu.instruction_table[0x05] = dcrb;
+
+    Instruction mvib = {
+        .size = 2,
+        .cycles_min = 7,
+        .cycles_max = 7,
+        .execute = &MVIB,
+    };
+
+    g_cpu.instruction_table[0x06] = mvib;
+
+    Instruction rlc = {
+        .size = 1,
         .cycles_min = 4,
         .cycles_max = 4,
-        .execute = &LXIB,
-        
-    }; 
+        .execute = &RLC,
+    };
 
-    // g_cpu.instruction_table[0x02] = &STAXB;
-    // g_cpu.instruction_table[0x03] = &INXB;
-    // g_cpu.instruction_table[0x04] = &INRB;
-    // g_cpu.instruction_table[0x05] = &DCRB;
-    // g_cpu.instruction_table[0x06] = &MVIB;
-    // g_cpu.instruction_table[0x07] = &RLC;
-    // g_cpu.instruction_table[0x09] = &DADB;
-    // g_cpu.instruction_table[0x0A] = &LDAXB;
-    // g_cpu.instruction_table[0x0B] = &DCXB;
+    g_cpu.instruction_table[0x07] = rlc;
+
+    Instruction dadb = {
+        .size = 1,
+        .cycles_min = 10,
+        .cycles_max = 10,
+        .execute = &DADB,
+    };
+
+    g_cpu.instruction_table[0x09] = dadb;
+
+    Instruction ldaxb = {
+        .size  =1,
+        .cycles_min = 7,
+        .cycles_max = 7,
+        .execute = &LDAXB,
+    };
+
+    g_cpu.instruction_table[0x0A] = ldaxb;
+
+    Instruction dcxb = {
+      .size = 1,
+      .cycles_min = 5,
+      .cycles_max = 5,
+      .execute = &DCXB,  
+    };
+
+
+    g_cpu.instruction_table[0x0B] = dcxb;
+
     // g_cpu.instruction_table[0x0C] = &INRC;
     // g_cpu.instruction_table[0x0D] = &DCRC;
     // g_cpu.instruction_table[0x0E] = &MVIC;
@@ -244,5 +327,4 @@ void CPU_CreateInstructionTable(void)
     // g_cpu.instruction_table[0xFB] = &EI;
     // g_cpu.instruction_table[0xFC] = &CM;
     // g_cpu.instruction_table[0xFE] = &CPI;
-
 }

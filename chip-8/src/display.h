@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <SDL2/SDL.h>
 
 #define SDL_SCREEN_WIDTH 640
@@ -13,7 +14,7 @@ typedef struct
     SDL_Renderer *ren;
     SDL_Texture *scr;
     uint32_t frameBuffer[CHIP8_SCREEN_WIDTH * CHIP8_SCREEN_HEIGHT];
-    uint8_t dirty;
+    bool dirty;
 } Display;
 
 void Display_Init(void);
