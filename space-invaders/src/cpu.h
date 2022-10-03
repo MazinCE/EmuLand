@@ -3,19 +3,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "register_file.h"
 
-enum CPU_Flags
+typedef enum
 {
-    SIGN   = 7,
-    ZERO   = 6,
-    AUX    = 4,
+    SIGN = 7,
+    ZERO = 6,
+    AUX = 4,
     PARITY = 2,
-    CARRY  = 0,
-};
+    CARRY = 0,
+} CPU_Flag;
 
 typedef struct
 {
-    uint8_t size;
     uint8_t cycles_min;
     uint8_t cycles_max;
     void (*execute)(void);
@@ -36,6 +36,36 @@ extern CPU g_cpu;
 void CPU_Init(void);
 void CPU_CreateInstructionTable(void);
 
+// Common
+void LXI(RegisterPair regPair);
+void STAX(RegisterPair regPair);
+void INX(RegisterPair regPair);
+void INR(WorkRegister reg);
+void DCR(WorkRegister reg);
+void MVI(WorkRegister reg);
+void DAD(RegisterPair regPair);
+void LDAX(RegisterPair regPair);
+void DCX(RegisterPair regPair);
+void MOV(WorkRegister dst, WorkRegister src);
+void MOVRM(WorkRegister dst);
+void MOVMR(WorkRegister src);
+void ADD(WorkRegister reg);
+void ADC(WorkRegister reg);
+void SUB(WorkRegister reg);
+void SBB(WorkRegister reg);
+void ANA(WorkRegister reg);
+void XRA(WorkRegister reg);
+void ORA(WorkRegister reg);
+void CMP(WorkRegister reg);
+void POP(RegisterPair regPair);
+void JMP(void);
+void PUSH(RegisterPair regPair);
+void CALL(void);
+void JMP_IF(CPU_Flag flag, bool cond);
+void CALL_IF(CPU_Flag flag, bool cond);
+void RET_IF(CPU_Flag flag, bool cond);
+
+// Instructions
 void NOP(void);
 void LXIB(void);
 void STAXB(void);

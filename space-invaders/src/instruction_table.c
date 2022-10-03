@@ -3,7 +3,6 @@
 void CPU_CreateInstructionTable(void)
 {
     Instruction nop = {
-        .size = 1,
         .cycles_min = 1,
         .cycles_max = 1,
         .execute = &NOP,
@@ -12,7 +11,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x00] = nop;
 
     Instruction lxib = {
-        .size = 2,
         .cycles_min = 10,
         .cycles_max = 10,
         .execute = &LXIB,
@@ -21,7 +19,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x01] = lxib;
 
     Instruction staxb = {
-        .size = 1,
         .cycles_min = 7,
         .cycles_max = 7,
         .execute = &STAXB,
@@ -30,7 +27,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x02] = staxb;
 
     Instruction inxb = {
-        .size = 1,
         .cycles_min = 5,
         .cycles_max = 5,
         .execute = &INXB,
@@ -39,7 +35,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x03] = inxb;
 
     Instruction inrb = {
-        .size = 1,
         .cycles_min = 5,
         .cycles_max = 5,
         .execute = &INRB,
@@ -48,7 +43,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x04] = inrb;
 
     Instruction dcrb = {
-        .size = 1,
         .cycles_min = 5,
         .cycles_max = 5,
         .execute = &DCRB,
@@ -57,7 +51,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x05] = dcrb;
 
     Instruction mvib = {
-        .size = 2,
         .cycles_min = 7,
         .cycles_max = 7,
         .execute = &MVIB,
@@ -66,7 +59,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x06] = mvib;
 
     Instruction rlc = {
-        .size = 1,
         .cycles_min = 4,
         .cycles_max = 4,
         .execute = &RLC,
@@ -75,7 +67,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x07] = rlc;
 
     Instruction dadb = {
-        .size = 1,
         .cycles_min = 10,
         .cycles_max = 10,
         .execute = &DADB,
@@ -84,7 +75,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x09] = dadb;
 
     Instruction ldaxb = {
-        .size  =1,
         .cycles_min = 7,
         .cycles_max = 7,
         .execute = &LDAXB,
@@ -93,7 +83,6 @@ void CPU_CreateInstructionTable(void)
     g_cpu.instruction_table[0x0A] = ldaxb;
 
     Instruction dcxb = {
-      .size = 1,
       .cycles_min = 5,
       .cycles_max = 5,
       .execute = &DCXB,  
