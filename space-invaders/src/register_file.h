@@ -34,11 +34,11 @@ typedef struct
     uint16_t PSW;
 } RegisterFile;
 
-uint8_t RegisterFile_ReadRegister(WorkRegister reg);
-uint16_t RegisterFile_ReadRegisterPair(RegisterPair reg_pair);
+uint8_t RegFile_ReadReg(WorkRegister reg);
+uint16_t RegFile_ReadRegPair(RegisterPair regPair);
 
-void RegisterFile_WriteRegister(WorkRegister reg, uint8_t val);
-void RegisterFile_WriteRegisterPair8(RegisterPair reg_pair, uint8_t upper, uint8_t lower);
-void RegisterFile_WriteRegisterPair16(RegisterPair reg_pair, uint16_t val);
+void RegFile_WriteReg(WorkRegister reg, uint8_t val);
+void RegFile_WriteRegPair8(RegisterPair regPair, uint8_t upper, uint8_t lower);
+void RegFile_WriteRegPair16(RegisterPair regPair, uint16_t val);
 
 #endif // REGISTER_FILE_H

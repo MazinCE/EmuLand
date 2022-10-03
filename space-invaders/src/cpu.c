@@ -4,136 +4,192 @@
 void CPU_Init(void) {}
 void CPU_CreateInstructionTable(void) {}
 
+void CPU_AlterCY(uint16_t testVal)
+{
+    uint8_t F = RegFile_ReadReg(WR_F);
+
+    F &= ~(1 << CARRY);
+
+    if (testVal > 255)
+    {
+        F |= (1 << CARRY);
+    }
+}
+
+void CPU_AlterZSPAC(uint16_t testVal)
+{
+    uint8_t F = RegFile_ReadReg(WR_F);
+
+    F &= ~(1 << ZERO);
+    F &= ~(1 << SIGN);
+    F &= ~(1 << PARITY);
+    F &= ~(1 << AUX);
+
+    if (testVal == 0)
+    {
+        F |= (1 << ZERO);
+    }
+
+    if (testVal & 0x80)
+    {
+        F |= (1 << SIGN);
+    }
+}
+
+void CPU_AlterZSPCYAC(uint16_t testVal)
+{
+    CPU_AlterZSPAC(testVal);
+    CPU_AlterCY(testVal);
+}
+
 void LXI(RegisterPair regPair)
 {
     uint8_t lower = Bus_ReadMemory(g_cpu.PC++);
     uint8_t upper = Bus_ReadMemory(g_cpu.PC++);
 
-    RegisterFile_WriteRegisterPair8(regPair, upper, lower);
+    RegFile_WriteRegPair8(regPair, upper, lower);
 }
 
 void STAX(RegisterPair regPair)
 {
-    uint16_t rp = RegisterFile_ReadRegisterPair(regPair);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
+    uint16_t rp = RegFile_ReadRegPair(regPair);
+    uint8_t A = RegFile_ReadReg(WR_A);
 
     Bus_WriteMemory(rp, A);
 }
 
 void INX(RegisterPair regPair)
 {
-    uint16_t rp = RegisterFile_ReadRegisterPair(regPair);
-    RegisterFile_WriteRegisterPair16(regPair, rp + 1);
+    uint16_t rp = RegFile_ReadRegPair(regPair);
+    RegFile_WriteRegPair16(regPair, rp + 1);
 }
 
 void INR(WorkRegister reg)
 {
-    uint8_t r = RegisterFile_ReadRegister(reg);
-    RegisterFile_WriteRegister(reg, r + 1);
+    uint8_t r = RegFile_ReadReg(reg);
+    uint16_t result = r + 1;
+    CPU_AlterZSPAC(result);
+    RegFile_WriteReg(reg, result & 0xFF);
 }
 
 void DCR(WorkRegister reg)
 {
-    uint8_t r = RegisterFile_ReadRegister(reg);
-    RegisterFile_WriteRegister(reg, r - 1);
+    uint8_t r = RegFile_ReadReg(reg);
+    uint16_t result = r - 1;
+    CPU_AlterZSPAC(result);
+    RegFile_WriteReg(reg, result & 0xFF);
 }
 
 void MVI(WorkRegister reg)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    RegisterFile_WriteRegister(reg, d8);
+    RegFile_WriteReg(reg, d8);
 }
 
 void DAD(RegisterPair regPair)
 {
-    uint16_t rp = RegisterFile_ReadRegisterPair(regPair);
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
-
-    RegisterFile_WriteRegisterPair16(RP_HL, HL + rp);
+    uint16_t rp = RegFile_ReadRegPair(regPair);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t result = HL + rp;
+    CPU_AlterCY(result);
+    RegFile_WriteRegPair16(RP_HL, result);
 }
 
 void LDAX(RegisterPair regPair)
 {
-    uint16_t rp = RegisterFile_ReadRegisterPair(regPair);
+    uint16_t rp = RegFile_ReadRegPair(regPair);
     uint8_t d8 = Bus_ReadMemory(rp);
-    RegisterFile_WriteRegister(WR_A, d8);
+    RegFile_WriteReg(WR_A, d8);
 }
 
 void DCX(RegisterPair regPair)
 {
-    uint16_t rp = RegisterFile_ReadRegisterPair(regPair);
-    RegisterFile_WriteRegisterPair16(regPair, rp - 1);
+    uint16_t rp = RegFile_ReadRegPair(regPair);
+    RegFile_WriteRegPair16(regPair, rp - 1);
 }
 
 void MOV(WorkRegister dst, WorkRegister src)
 {
-    RegisterFile_WriteRegister(dst, RegisterFile_ReadRegister(src));
+    RegFile_WriteReg(dst, RegFile_ReadReg(src));
 }
 
 void MOVRM(WorkRegister dst)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
 
-    RegisterFile_WriteRegister(dst, m);
+    RegFile_WriteReg(dst, m);
 }
 
 void MOVMR(WorkRegister src)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
-    Bus_WriteMemory(HL, RegisterFile_ReadRegister(src));
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
+    Bus_WriteMemory(HL, RegFile_ReadReg(src));
 }
 
 void ADD(WorkRegister reg)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A + RegisterFile_ReadRegister(reg));
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A + RegFile_ReadReg(reg);
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void ADC(WorkRegister reg)
 {
-    uint8_t carry = RegisterFile_ReadRegister(WR_F) & (1 << CARRY) ? 1 : 0;
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A + RegisterFile_ReadRegister(reg) + carry);
+    uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A + RegFile_ReadReg(reg) + carry;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void SUB(WorkRegister reg)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A - RegisterFile_ReadRegister(reg));
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A - RegFile_ReadReg(reg);
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void SBB(WorkRegister reg)
 {
-    uint8_t carry = RegisterFile_ReadRegister(WR_F) & (1 << CARRY) ? 1 : 0;
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A - RegisterFile_ReadRegister(reg) - carry);
+    uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A - RegFile_ReadReg(reg) - carry;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void ANA(WorkRegister reg)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A & RegisterFile_ReadRegister(reg));
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A & RegFile_ReadReg(reg);
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void XRA(WorkRegister reg)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A ^ RegisterFile_ReadRegister(reg));
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A ^ RegFile_ReadReg(reg);
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void ORA(WorkRegister reg)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A | RegisterFile_ReadRegister(reg));
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A | RegFile_ReadReg(reg);
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void CMP(WorkRegister reg)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    uint8_t r = RegisterFile_ReadRegister(reg);
-
-    uint16_t result = A - r;
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint8_t r = RegFile_ReadReg(reg);
+    CPU_AlterZSPCYAC(A - r);
 }
 
 void POP(RegisterPair regPair)
@@ -141,7 +197,7 @@ void POP(RegisterPair regPair)
     uint8_t lower = Bus_ReadMemory(g_cpu.SP++);
     uint8_t upper = Bus_ReadMemory(g_cpu.SP++);
 
-    RegisterFile_WriteRegisterPair8(regPair, upper, lower);
+    RegFile_WriteRegPair8(regPair, upper, lower);
 }
 
 void JMP(void)
@@ -168,12 +224,12 @@ void PUSH(RegisterPair regPair)
     uint8_t upper = Bus_ReadMemory(--g_cpu.SP);
     uint8_t lower = Bus_ReadMemory(--g_cpu.SP);
 
-    RegisterFile_WriteRegisterPair8(regPair, upper, lower);
+    RegFile_WriteRegPair8(regPair, upper, lower);
 }
 
 void JMP_IF(CPU_Flag flag, bool cond)
 {
-    bool flagStatus = RegisterFile_ReadRegister(WR_F) & (1 << flag);
+    bool flagStatus = RegFile_ReadReg(WR_F) & (1 << flag);
 
     if (flagStatus == cond)
     {
@@ -183,7 +239,7 @@ void JMP_IF(CPU_Flag flag, bool cond)
 
 void CALL_IF(CPU_Flag flag, bool cond)
 {
-    bool flagStatus = RegisterFile_ReadRegister(WR_F) & (1 << flag);
+    bool flagStatus = RegFile_ReadReg(WR_F) & (1 << flag);
 
     if (flagStatus == cond)
     {
@@ -193,7 +249,7 @@ void CALL_IF(CPU_Flag flag, bool cond)
 
 void RET_IF(CPU_Flag flag, bool cond)
 {
-    bool flagStatus = RegisterFile_ReadRegister(WR_F) & (1 << flag);
+    bool flagStatus = RegFile_ReadReg(WR_F) & (1 << flag);
 
     if (flagStatus == cond)
     {
@@ -347,8 +403,8 @@ void SHLD(void)
 
     uint16_t addr = (addr_hi << 8) | addr_lo;
 
-    uint8_t H = RegisterFile_ReadRegister(WR_H);
-    uint8_t L = RegisterFile_ReadRegister(WR_L);
+    uint8_t H = RegFile_ReadReg(WR_H);
+    uint8_t L = RegFile_ReadReg(WR_L);
 
     Bus_WriteMemory(addr, L);
     Bus_WriteMemory(addr + 1, H);
@@ -388,8 +444,8 @@ void LHLD(void)
 
     uint16_t addr = (addr_hi << 8) | addr_lo;
 
-    RegisterFile_WriteRegister(WR_L, Bus_ReadMemory(addr));
-    RegisterFile_WriteRegister(WR_H, Bus_ReadMemory(addr + 1));
+    RegFile_WriteReg(WR_L, Bus_ReadMemory(addr));
+    RegFile_WriteReg(WR_H, Bus_ReadMemory(addr + 1));
 }
 
 void DCXH(void)
@@ -414,8 +470,8 @@ void MVIL(void)
 
 void CMA(void)
 {
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, ~A);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    RegFile_WriteReg(WR_A, ~A);
 }
 
 void LXISP(void)
@@ -432,7 +488,7 @@ void STA(void)
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
 
     uint16_t addr = (addr_hi << 8) | addr_lo;
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
+    uint8_t A = RegFile_ReadReg(WR_A);
 
     Bus_WriteMemory(addr, A);
 }
@@ -444,7 +500,7 @@ void INXSP(void)
 
 void INRM(void)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
 
     uint8_t m = Bus_ReadMemory(HL);
     Bus_WriteMemory(HL, m + 1);
@@ -452,7 +508,7 @@ void INRM(void)
 
 void DCRM(void)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
 
     uint8_t m = Bus_ReadMemory(HL);
     Bus_WriteMemory(HL, m - 1);
@@ -460,7 +516,7 @@ void DCRM(void)
 
 void MVIM(void)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
 
     Bus_WriteMemory(HL, d8);
@@ -468,15 +524,17 @@ void MVIM(void)
 
 void STC(void)
 {
-    uint8_t F = RegisterFile_ReadRegister(WR_F);
+    uint8_t F = RegFile_ReadReg(WR_F);
     F |= (1 << CARRY);
-    RegisterFile_WriteRegister(WR_F, F);
+    RegFile_WriteReg(WR_F, F);
 }
 
 void DADSP(void)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
-    RegisterFile_WriteRegisterPair16(RP_HL, HL + g_cpu.SP);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t result = HL + g_cpu.SP;
+    CPU_AlterCY(result);
+    RegFile_WriteRegPair16(RP_HL, result);
 }
 
 void LDA(void)
@@ -486,7 +544,7 @@ void LDA(void)
 
     uint16_t addr = (addr_hi << 8) | addr_lo;
 
-    RegisterFile_WriteRegister(WR_A, Bus_ReadMemory(addr));
+    RegFile_WriteReg(WR_A, Bus_ReadMemory(addr));
 }
 
 void DCXSP(void)
@@ -511,7 +569,7 @@ void MVIA(void)
 
 void CMC(void)
 {
-    uint8_t F = RegisterFile_ReadRegister(WR_F);
+    uint8_t F = RegFile_ReadReg(WR_F);
 
     if (F & (1 << CARRY))
     {
@@ -522,7 +580,7 @@ void CMC(void)
         F |= (1 << CARRY);
     }
 
-    RegisterFile_WriteRegister(WR_F, F);
+    RegFile_WriteReg(WR_F, F);
 }
 
 void MOVBB(void)
@@ -874,10 +932,10 @@ void ADDL(void)
 
 void ADDM(void)
 {
-    uint8_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A + m);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    RegFile_WriteReg(WR_A, A + m);
 }
 
 void ADDA(void)
@@ -917,11 +975,11 @@ void ADCL(void)
 
 void ADCM(void)
 {
-    uint8_t carry = RegisterFile_ReadRegister(WR_F) & (1 << CARRY) ? 1 : 0;
+    uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t m = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
+    uint8_t A = RegFile_ReadReg(WR_A);
 
-    RegisterFile_WriteRegister(WR_A, A + m + carry);
+    RegFile_WriteReg(WR_A, A + m + carry);
 }
 
 void ADCA(void)
@@ -961,10 +1019,10 @@ void SUBL(void)
 
 void SUBM(void)
 {
-    uint8_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A - m);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    RegFile_WriteReg(WR_A, A - m);
 }
 
 void SUBA(void)
@@ -1004,11 +1062,11 @@ void SBBL(void)
 
 void SBBM(void)
 {
-    uint8_t carry = RegisterFile_ReadRegister(WR_F) & (1 << CARRY) ? 1 : 0;
+    uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t m = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
+    uint8_t A = RegFile_ReadReg(WR_A);
 
-    RegisterFile_WriteRegister(WR_A, A - m - carry);
+    RegFile_WriteReg(WR_A, A - m - carry);
 }
 
 void SBBA(void)
@@ -1048,10 +1106,10 @@ void ANAL(void)
 
 void ANAM(void)
 {
-    uint8_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A & m);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    RegFile_WriteReg(WR_A, A & m);
 }
 
 void ANAA(void)
@@ -1091,10 +1149,10 @@ void XRAL(void)
 
 void XRAM(void)
 {
-    uint8_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A ^ m);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    RegFile_WriteReg(WR_A, A ^ m);
 }
 
 void XRAA(void)
@@ -1134,10 +1192,10 @@ void ORAL(void)
 
 void ORAM(void)
 {
-    uint8_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A | m);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    RegFile_WriteReg(WR_A, A | m);
 }
 
 void ORAA(void)
@@ -1177,9 +1235,9 @@ void CMPL(void)
 
 void CMPM(void)
 {
-    uint8_t HL = RegisterFile_ReadRegisterPair(RP_HL);
+    uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
+    uint8_t A = RegFile_ReadReg(WR_A);
 
     uint16_t result = A - m;
 }
@@ -1217,8 +1275,10 @@ void PUSHB(void)
 void ADI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A + d8);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A + d8;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RZ(void)
@@ -1238,10 +1298,12 @@ void CZ(void)
 
 void ACI(void)
 {
-    uint8_t carry = RegisterFile_ReadRegister(WR_F) & (1 << CARRY) ? 1 : 0;
+    uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A + d8 + carry);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A + d8 + carry;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RNC(void)
@@ -1274,8 +1336,10 @@ void PUSHD(void)
 void SUI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A - d8);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A - d8;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RC(void)
@@ -1297,10 +1361,12 @@ void CC(void)
 
 void SBI(void)
 {
-    uint8_t carry = RegisterFile_ReadRegister(WR_F) & (1 << CARRY) ? 1 : 0;
+    uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A - d8 - carry);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A - d8 - carry;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RPO(void) {}
@@ -1316,11 +1382,11 @@ void JPO(void)
 
 void XTHL(void)
 {
-    uint8_t H = RegisterFile_ReadRegister(WR_H);
-    uint8_t L = RegisterFile_ReadRegister(WR_L);
+    uint8_t H = RegFile_ReadReg(WR_H);
+    uint8_t L = RegFile_ReadReg(WR_L);
 
-    RegisterFile_WriteRegister(WR_L, Bus_ReadMemory(g_cpu.SP));
-    RegisterFile_WriteRegister(WR_H, Bus_ReadMemory(g_cpu.SP + 1));
+    RegFile_WriteReg(WR_L, Bus_ReadMemory(g_cpu.SP));
+    RegFile_WriteReg(WR_H, Bus_ReadMemory(g_cpu.SP + 1));
 
     Bus_WriteMemory(g_cpu.SP, L);
     Bus_WriteMemory(g_cpu.SP + 1, H);
@@ -1336,26 +1402,28 @@ void PUSHH(void)
 void ANI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A & d8);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A & d8;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RPE(void) {}
 
 void PCHL(void)
 {
-    g_cpu.PC = RegisterFile_ReadRegisterPair(RP_HL);
+    g_cpu.PC = RegFile_ReadRegPair(RP_HL);
 }
 
 void JPE(void) {}
 
 void XCHG(void)
 {
-    uint16_t HL = RegisterFile_ReadRegisterPair(RP_HL);
-    uint16_t DE = RegisterFile_ReadRegisterPair(RP_DE);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t DE = RegFile_ReadRegPair(RP_DE);
 
-    RegisterFile_WriteRegisterPair16(RP_HL, DE);
-    RegisterFile_WriteRegisterPair16(RP_DE, HL);
+    RegFile_WriteRegPair16(RP_HL, DE);
+    RegFile_WriteRegPair16(RP_DE, HL);
 }
 
 void CPE(void) {}
@@ -1363,8 +1431,10 @@ void CPE(void) {}
 void XRI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A ^ d8);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A ^ d8;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RP(void)
@@ -1400,8 +1470,10 @@ void PUSHPSW(void)
 void ORI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    RegisterFile_WriteRegister(WR_A, A | d8);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint16_t result = A | d8;
+    CPU_AlterZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 }
 
 void RM(void)
@@ -1411,7 +1483,7 @@ void RM(void)
 
 void SPHL(void)
 {
-    g_cpu.SP = RegisterFile_ReadRegisterPair(RP_HL);
+    g_cpu.SP = RegFile_ReadRegPair(RP_HL);
 }
 
 void JM(void)
@@ -1432,6 +1504,6 @@ void CM(void)
 void CPI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
-    uint8_t A = RegisterFile_ReadRegister(WR_A);
-    uint16_t result = A - d8;
+    uint8_t A = RegFile_ReadReg(WR_A);
+    CPU_AlterZSPCYAC(A - d8);
 }

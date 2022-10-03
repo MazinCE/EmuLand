@@ -36,6 +36,10 @@ extern CPU g_cpu;
 void CPU_Init(void);
 void CPU_CreateInstructionTable(void);
 
+void CPU_AlterCY(uint16_t testVal);
+void CPU_AlterZSPAC(uint16_t testVal);
+void CPU_AlterZSPCYAC(uint16_t testVal);
+
 // Common
 void LXI(RegisterPair regPair);
 void STAX(RegisterPair regPair);
