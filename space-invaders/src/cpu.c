@@ -4,7 +4,7 @@
 void CPU_Init(void) {}
 void CPU_CreateInstructionTable(void) {}
 
-void CPU_AlterCY(uint16_t testVal)
+void CPU_UpdateFlagCY(uint16_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
@@ -18,7 +18,7 @@ void CPU_AlterCY(uint16_t testVal)
     RegFile_WriteReg(F, WR_F);
 }
 
-void CPU_AlterAC(uint8_t testVal)
+void CPU_UpdateFlagAC(uint8_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
@@ -32,7 +32,7 @@ void CPU_AlterAC(uint8_t testVal)
     RegFile_WriteReg(F, WR_F);
 }
 
-void CPU_AlterZSPAC(uint16_t testVal)
+void CPU_UpdateFlagZSPAC(uint16_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
@@ -72,10 +72,10 @@ void CPU_AlterZSPAC(uint16_t testVal)
     RegFile_WriteReg(F, WR_F);
 }
 
-void CPU_AlterZSPCYAC(uint16_t testVal)
+void CPU_UpdateFlagZSPCYAC(uint16_t testVal)
 {
-    CPU_AlterZSPAC(testVal);
-    CPU_AlterCY(testVal);
+    CPU_UpdateFlagZSPAC(testVal);
+    CPU_UpdateFlagCY(testVal);
 }
 
 void LXI(RegisterPair regPair)
@@ -104,7 +104,7 @@ void INR(WorkRegister reg)
 {
     uint8_t r = RegFile_ReadReg(reg);
     uint16_t result = r + 1;
-    CPU_AlterZSPAC(result);
+    CPU_UpdateFlagZSPAC(result);
     RegFile_WriteReg(reg, result & 0xFF);
 }
 
@@ -112,7 +112,7 @@ void DCR(WorkRegister reg)
 {
     uint8_t r = RegFile_ReadReg(reg);
     uint16_t result = r - 1;
-    CPU_AlterZSPAC(result);
+    CPU_UpdateFlagZSPAC(result);
     RegFile_WriteReg(reg, result & 0xFF);
 }
 
@@ -127,7 +127,7 @@ void DAD(RegisterPair regPair)
     uint16_t rp = RegFile_ReadRegPair(regPair);
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint16_t result = HL + rp;
-    CPU_AlterCY(result);
+    CPU_UpdateFlagCY(result);
     RegFile_WriteRegPair16(RP_HL, result);
 }
 
@@ -167,7 +167,7 @@ void ADD(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + RegFile_ReadReg(reg);
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -176,7 +176,7 @@ void ADC(WorkRegister reg)
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + RegFile_ReadReg(reg) + carry;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -184,7 +184,7 @@ void SUB(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - RegFile_ReadReg(reg);
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -193,7 +193,7 @@ void SBB(WorkRegister reg)
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - RegFile_ReadReg(reg) - carry;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -201,7 +201,7 @@ void ANA(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A & RegFile_ReadReg(reg);
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -209,7 +209,7 @@ void XRA(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A ^ RegFile_ReadReg(reg);
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -217,7 +217,7 @@ void ORA(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A | RegFile_ReadReg(reg);
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -225,7 +225,7 @@ void CMP(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint8_t r = RegFile_ReadReg(reg);
-    CPU_AlterZSPCYAC(A - r);
+    CPU_UpdateFlagZSPCYAC(A - r);
 }
 
 void POP(RegisterPair regPair)
@@ -636,7 +636,7 @@ void DADSP(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint16_t result = HL + g_cpu.SP;
-    CPU_AlterCY(result);
+    CPU_UpdateFlagCY(result);
     RegFile_WriteRegPair16(RP_HL, result);
 }
 
@@ -1342,7 +1342,8 @@ void CMPM(void)
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
 
-    uint16_t result = A - m;
+    CPU_UpdateFlagZSPCYAC(A - m);
+
 }
 
 void CMPA(void)
@@ -1380,7 +1381,7 @@ void ADI(void)
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + d8;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -1405,7 +1406,7 @@ void ACI(void)
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + d8 + carry;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -1445,7 +1446,7 @@ void SUI(void)
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - d8;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -1476,11 +1477,14 @@ void SBI(void)
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - d8 - carry;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
-void RPO(void) {}
+void RPO(void)
+{
+    RET_IF(PARITY, true);
+}
 
 void POPH(void)
 {
@@ -1489,6 +1493,7 @@ void POPH(void)
 
 void JPO(void)
 {
+    JMP_IF(PARITY, true);
 }
 
 void XTHL(void)
@@ -1503,7 +1508,10 @@ void XTHL(void)
     Bus_WriteMemory(g_cpu.SP + 1, H);
 }
 
-void CPO(void) {}
+void CPO(void)
+{
+    CALL_IF(PARITY, true);
+}
 
 void PUSHH(void)
 {
@@ -1515,18 +1523,24 @@ void ANI(void)
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A & d8;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
-void RPE(void) {}
+void RPE(void)
+{
+    RET_IF(PARITY, false);
+}
 
 void PCHL(void)
 {
     g_cpu.PC = RegFile_ReadRegPair(RP_HL);
 }
 
-void JPE(void) {}
+void JPE(void)
+{
+    JMP_IF(PARITY, false);
+}
 
 void XCHG(void)
 {
@@ -1537,14 +1551,17 @@ void XCHG(void)
     RegFile_WriteRegPair16(RP_DE, HL);
 }
 
-void CPE(void) {}
+void CPE(void)
+{
+    CALL_IF(PARITY, false);
+}
 
 void XRI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A ^ d8;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -1583,7 +1600,7 @@ void ORI(void)
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A | d8;
-    CPU_AlterZSPCYAC(result);
+    CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
 }
 
@@ -1616,5 +1633,5 @@ void CPI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
-    CPU_AlterZSPCYAC(A - d8);
+    CPU_UpdateFlagZSPCYAC(A - d8);
 }
