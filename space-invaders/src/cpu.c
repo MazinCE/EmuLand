@@ -10,20 +10,40 @@ void CPU_AlterCY(uint16_t testVal)
 
     F &= ~(1 << CARRY);
 
-    if (testVal > 255)
+    if (testVal > 0xFF)
     {
         F |= (1 << CARRY);
     }
+
+    RegFile_WriteReg(F, WR_F);
+}
+
+void CPU_AlterAC(uint8_t testVal)
+{
+    uint8_t F = RegFile_ReadReg(WR_F);
+
+    F &= ~(1 << AUX);
+
+    if (testVal > 0x0F)
+    {
+        F |= (1 << AUX);
+    }
+
+    RegFile_WriteReg(F, WR_F);
 }
 
 void CPU_AlterZSPAC(uint16_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
-    F &= ~(1 << ZERO);
-    F &= ~(1 << SIGN);
-    F &= ~(1 << PARITY);
-    F &= ~(1 << AUX);
+    uint8_t CY = F & (1 << CARRY);
+
+    F = 0;
+
+    if (CY)
+    {
+        F |= (1 << CARRY);
+    }
 
     if (testVal == 0)
     {
@@ -34,6 +54,22 @@ void CPU_AlterZSPAC(uint16_t testVal)
     {
         F |= (1 << SIGN);
     }
+
+    uint8_t testByte = testVal & 0xFF;
+
+    uint8_t P = 0;
+
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        P ^= 1 & (testByte >> i);
+    }
+
+    if (P)
+    {
+        F |= (1 << PARITY);
+    }
+
+    RegFile_WriteReg(F, WR_F);
 }
 
 void CPU_AlterZSPCYAC(uint16_t testVal)
@@ -293,7 +329,21 @@ void MVIB(void)
     MVI(WR_B);
 }
 
-void RLC(void) {}
+void RLC(void)
+{
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint8_t bit7 = A & 0x80 ? 1 : 0;
+
+    A = (A << 1) | bit7;
+
+    uint8_t F = RegFile_ReadReg(WR_F);
+    F &= ~(1 << CARRY);
+
+    if (bit7)
+    {
+        F |= (1 << CARRY);
+    }
+}
 
 void DADB(void)
 {
@@ -325,7 +375,23 @@ void MVIC(void)
     MVI(WR_C);
 }
 
-void RRC(void) {}
+void RRC(void)
+{
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint8_t bit0 = A & 0x01 ? 1 : 0;
+
+    A = (A >> 1) | (bit0 << 7);
+
+    uint8_t F = RegFile_ReadReg(WR_F);
+    F &= ~(1 << CARRY);
+
+    if (bit0)
+    {
+        F |= (1 << CARRY);
+    }
+
+    RegFile_WriteReg(F, WR_F);
+}
 
 void LXID(void)
 {
@@ -357,7 +423,24 @@ void MVID(void)
     MVI(WR_D);
 }
 
-void RAL(void) {}
+void RAL(void)
+{
+    uint8_t F = RegFile_ReadReg(WR_F);
+    uint8_t CY = F & (1 << CARRY);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint8_t bit7 = A & 0x80;
+
+    A = (A << 1) | CY;
+
+    F &= ~(1 << CARRY);
+
+    if (bit7)
+    {
+        F |= (1 << CARRY);
+    }
+
+    RegFile_WriteReg(F, WR_F);
+}
 
 void DADD(void)
 {
@@ -389,7 +472,25 @@ void MVIE(void)
     MVI(WR_E);
 }
 
-void RAR(void) {}
+void RAR(void)
+{
+    uint8_t F = RegFile_ReadReg(WR_F);
+    uint8_t CY = F & (1 << CARRY);
+    uint8_t A = RegFile_ReadReg(WR_A);
+    uint8_t bit7 = A & 0x80;
+    uint8_t bit0 = A & 0x01;
+
+    A = (A >> 1) | bit7;
+
+    F &= ~(1 << CARRY);
+
+    if (bit0)
+    {
+        F |= (1 << CARRY);
+    }
+
+    RegFile_WriteReg(F, WR_F);
+}
 
 void LXIH(void)
 {
@@ -430,7 +531,9 @@ void MVIH(void)
     MVI(WR_H);
 }
 
-void DAA(void) {}
+void DAA(void)
+{
+}
 
 void DADH(void)
 {
@@ -1321,7 +1424,11 @@ void JNC(void)
     JMP_IF(CARRY, false);
 }
 
-void OUT(void) {}
+void OUT(void)
+{
+    uint8_t port = Bus_ReadMemory(g_cpu.PC++);
+    Bus_WritePort((IoPort)port, RegFile_ReadReg(WR_A));
+}
 
 void CNC(void)
 {
@@ -1352,7 +1459,11 @@ void JC(void)
     JMP_IF(CARRY, true);
 }
 
-void IN(void) {}
+void IN(void)
+{
+    uint8_t port = Bus_ReadMemory(g_cpu.PC++);
+    RegFile_WriteReg(WR_A, Bus_ReadPort((IoPort)port));
+}
 
 void CC(void)
 {
