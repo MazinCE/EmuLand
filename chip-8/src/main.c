@@ -12,7 +12,7 @@ int main(int argc, char **args)
 
     Chip8_Init();
 
-    int quit = Chip8_LoadRom(args[1]) == -1;
+    bool quit = Chip8_LoadRom(args[1]) == -1;
 
     uint8_t cycleDelay = atoi(args[2]);
 
@@ -32,7 +32,7 @@ int main(int argc, char **args)
         {
             if (e.type == SDL_QUIT)
             {
-                quit = 1;
+                quit = true;
             }
             else
             {

@@ -1,0 +1,42 @@
+[
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/arcade.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/arcade.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/arcade.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/bus.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/bus.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/bus.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/cpu.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/cpu.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/cpu.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/display.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/display.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/display.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/instruction_table.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/instruction_table.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/instruction_table.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/main.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/main.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/main.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/memory.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/memory.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/memory.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/register_file.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.c"
+}
+]

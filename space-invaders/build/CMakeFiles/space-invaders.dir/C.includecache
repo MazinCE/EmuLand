@@ -1,0 +1,38 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mazin/Documents/dev/Emulators/space-invaders/src/bus.h
+stdint.h
+-
+memory.h
+/home/mazin/Documents/dev/Emulators/space-invaders/src/memory.h
+
+/home/mazin/Documents/dev/Emulators/space-invaders/src/cpu.c
+cpu.h
+/home/mazin/Documents/dev/Emulators/space-invaders/src/cpu.h
+bus.h
+/home/mazin/Documents/dev/Emulators/space-invaders/src/bus.h
+stdio.h
+-
+
+/home/mazin/Documents/dev/Emulators/space-invaders/src/cpu.h
+stdint.h
+-
+stdbool.h
+-
+register_file.h
+/home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.h
+
+/home/mazin/Documents/dev/Emulators/space-invaders/src/memory.h
+stdint.h
+-
+
+/home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.h
+stdint.h
+-
+

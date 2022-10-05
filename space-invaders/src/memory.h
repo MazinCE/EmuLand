@@ -5,7 +5,7 @@
 
 typedef struct
 {
-    uint8_t addr_mask;
+    uint32_t addr_mask;
     uint8_t *data;
 } Memory;
 

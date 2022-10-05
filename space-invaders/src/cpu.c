@@ -1,8 +1,37 @@
 #include "cpu.h"
 #include "bus.h"
+#include <stdio.h>
 
-void CPU_Init(void) {}
-void CPU_CreateInstructionTable(void) {}
+CPU g_cpu;
+
+void CPU_Init(void)
+{
+    CPU_CreateInstructionTable();
+    g_cpu.interruptsEnabled = false;
+    g_cpu.cycles = 0;
+    g_cpu.PC = 0x0000;
+}
+
+uint32_t CPU_Tick(void)
+{
+    uint8_t opcode = Bus_ReadMemory(g_cpu.PC++);
+
+    InstructionFn execute = g_cpu.instructionTable[opcode];
+
+    if (execute)
+    {
+        g_cpu.cycles += execute();
+    }
+
+    // printf("opcode = %X\n", opcode);
+
+    return g_cpu.cycles;
+}
+
+void CPU_ResetTicks(void)
+{
+    g_cpu.cycles = 0;
+}
 
 void CPU_UpdateFlagCY(uint16_t testVal)
 {
@@ -78,173 +107,225 @@ void CPU_UpdateFlagZSPCYAC(uint16_t testVal)
     CPU_UpdateFlagCY(testVal);
 }
 
-void LXI(RegisterPair regPair)
+uint8_t LXI(RegisterPair regPair)
 {
     uint8_t lower = Bus_ReadMemory(g_cpu.PC++);
     uint8_t upper = Bus_ReadMemory(g_cpu.PC++);
 
     RegFile_WriteRegPair8(regPair, upper, lower);
+
+    return 10;
 }
 
-void STAX(RegisterPair regPair)
+uint8_t STAX(RegisterPair regPair)
 {
     uint16_t rp = RegFile_ReadRegPair(regPair);
     uint8_t A = RegFile_ReadReg(WR_A);
 
     Bus_WriteMemory(rp, A);
+
+    return 7;
 }
 
-void INX(RegisterPair regPair)
+uint8_t INX(RegisterPair regPair)
 {
     uint16_t rp = RegFile_ReadRegPair(regPair);
     RegFile_WriteRegPair16(regPair, rp + 1);
+
+    return 5;
 }
 
-void INR(WorkRegister reg)
+uint8_t INR(WorkRegister reg)
 {
     uint8_t r = RegFile_ReadReg(reg);
     uint16_t result = r + 1;
     CPU_UpdateFlagZSPAC(result);
     RegFile_WriteReg(reg, result & 0xFF);
+
+    return 5;
 }
 
-void DCR(WorkRegister reg)
+uint8_t DCR(WorkRegister reg)
 {
     uint8_t r = RegFile_ReadReg(reg);
     uint16_t result = r - 1;
     CPU_UpdateFlagZSPAC(result);
     RegFile_WriteReg(reg, result & 0xFF);
+
+    return 5;
 }
 
-void MVI(WorkRegister reg)
+uint8_t MVI(WorkRegister reg)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     RegFile_WriteReg(reg, d8);
+
+    return 7;
 }
 
-void DAD(RegisterPair regPair)
+uint8_t DAD(RegisterPair regPair)
 {
     uint16_t rp = RegFile_ReadRegPair(regPair);
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint16_t result = HL + rp;
     CPU_UpdateFlagCY(result);
     RegFile_WriteRegPair16(RP_HL, result);
+
+    return 10;
 }
 
-void LDAX(RegisterPair regPair)
+uint8_t LDAX(RegisterPair regPair)
 {
     uint16_t rp = RegFile_ReadRegPair(regPair);
     uint8_t d8 = Bus_ReadMemory(rp);
     RegFile_WriteReg(WR_A, d8);
+
+    return 7;
 }
 
-void DCX(RegisterPair regPair)
+uint8_t DCX(RegisterPair regPair)
 {
     uint16_t rp = RegFile_ReadRegPair(regPair);
     RegFile_WriteRegPair16(regPair, rp - 1);
+
+    return 5;
 }
 
-void MOV(WorkRegister dst, WorkRegister src)
+uint8_t MOV(WorkRegister dst, WorkRegister src)
 {
     RegFile_WriteReg(dst, RegFile_ReadReg(src));
+    return 5;
 }
 
-void MOVRM(WorkRegister dst)
+uint8_t MOVRM(WorkRegister dst)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
 
     RegFile_WriteReg(dst, m);
+
+    return 7;
 }
 
-void MOVMR(WorkRegister src)
+uint8_t MOVMR(WorkRegister src)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     Bus_WriteMemory(HL, RegFile_ReadReg(src));
+
+    return 7;
 }
 
-void ADD(WorkRegister reg)
+uint8_t ADD(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + RegFile_ReadReg(reg);
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void ADC(WorkRegister reg)
+uint8_t ADC(WorkRegister reg)
 {
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + RegFile_ReadReg(reg) + carry;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void SUB(WorkRegister reg)
+uint8_t SUB(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - RegFile_ReadReg(reg);
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void SBB(WorkRegister reg)
+uint8_t SBB(WorkRegister reg)
 {
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - RegFile_ReadReg(reg) - carry;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void ANA(WorkRegister reg)
+uint8_t ANA(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A & RegFile_ReadReg(reg);
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void XRA(WorkRegister reg)
+uint8_t XRA(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A ^ RegFile_ReadReg(reg);
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void ORA(WorkRegister reg)
+uint8_t ORA(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A | RegFile_ReadReg(reg);
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 4;
 }
 
-void CMP(WorkRegister reg)
+uint8_t CMP(WorkRegister reg)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint8_t r = RegFile_ReadReg(reg);
     CPU_UpdateFlagZSPCYAC(A - r);
+
+    return 4;
 }
 
-void POP(RegisterPair regPair)
+uint8_t POP(RegisterPair regPair)
 {
     uint8_t lower = Bus_ReadMemory(g_cpu.SP++);
     uint8_t upper = Bus_ReadMemory(g_cpu.SP++);
 
     RegFile_WriteRegPair8(regPair, upper, lower);
+
+    return 10;
 }
 
-void JMP(void)
+uint8_t JMP(void)
 {
     uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
 
     g_cpu.PC = (addr_hi << 8) | addr_lo;
+
+    return 10;
 }
 
-void CALL(void)
+uint8_t RET(void)
+{
+    uint8_t pcl = Bus_ReadMemory(g_cpu.SP++);
+    uint8_t pch = Bus_ReadMemory(g_cpu.SP++);
+
+    g_cpu.PC = (pch << 8) | pcl;
+    return 10;
+}
+
+uint8_t CALL(void)
 {
     uint8_t PCH = g_cpu.PC >> 8;
     uint8_t PCL = g_cpu.PC & 0xFF;
@@ -253,83 +334,94 @@ void CALL(void)
     Bus_WriteMemory(--g_cpu.SP, PCL);
 
     JMP();
+
+    return 17;
 }
 
-void PUSH(RegisterPair regPair)
+uint8_t PUSH(RegisterPair regPair)
 {
     uint8_t upper = Bus_ReadMemory(--g_cpu.SP);
     uint8_t lower = Bus_ReadMemory(--g_cpu.SP);
 
     RegFile_WriteRegPair8(regPair, upper, lower);
+
+    return 11;
 }
 
-void JMP_IF(CPU_Flag flag, bool cond)
+uint8_t JMP_IF(CPU_Flag flag, bool cond)
 {
     bool flagStatus = RegFile_ReadReg(WR_F) & (1 << flag);
 
     if (flagStatus == cond)
     {
-        JMP();
+        return JMP();
     }
+
+    return 10;
 }
 
-void CALL_IF(CPU_Flag flag, bool cond)
+uint8_t CALL_IF(CPU_Flag flag, bool cond)
 {
     bool flagStatus = RegFile_ReadReg(WR_F) & (1 << flag);
 
     if (flagStatus == cond)
     {
-        CALL();
+        return CALL();
     }
+
+    return 11;
 }
 
-void RET_IF(CPU_Flag flag, bool cond)
+uint8_t RET_IF(CPU_Flag flag, bool cond)
 {
     bool flagStatus = RegFile_ReadReg(WR_F) & (1 << flag);
 
     if (flagStatus == cond)
     {
-        RET();
+        return RET();
     }
+
+    return 5;
 }
 
 // ---------------------------------------------------------------------------------------
 
-void NOP(void)
+uint8_t NOP(void)
 {
+    return 4;
 }
 
-void LXIB(void)
+uint8_t LXIB(void)
 {
-    LXI(RP_BC);
+    return LXI(RP_BC);
 }
 
-void STAXB(void)
+uint8_t STAXB(void)
 {
-    STAX(RP_BC);
+    return STAX(RP_BC);
 }
 
-void INXB(void)
+uint8_t INXB(void)
 {
-    INX(RP_BC);
+    return INX(RP_BC);
 }
 
-void INRB(void)
+uint8_t INRB(void)
 {
-    INR(WR_B);
+    return INR(WR_B);
 }
 
-void DCRB(void)
+uint8_t DCRB(void)
 {
-    DCR(WR_B);
+    return DCR(WR_B);
 }
 
-void MVIB(void)
+uint8_t MVIB(void)
 {
-    MVI(WR_B);
+    return MVI(WR_B);
 }
 
-void RLC(void)
+uint8_t RLC(void)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint8_t bit7 = A & 0x80 ? 1 : 0;
@@ -343,39 +435,41 @@ void RLC(void)
     {
         F |= (1 << CARRY);
     }
+
+    return 4;
 }
 
-void DADB(void)
+uint8_t DADB(void)
 {
-    DAD(RP_BC);
+    return DAD(RP_BC);
 }
 
-void LDAXB(void)
+uint8_t LDAXB(void)
 {
-    LDAX(RP_BC);
+    return LDAX(RP_BC);
 }
 
-void DCXB(void)
+uint8_t DCXB(void)
 {
-    DCX(RP_BC);
+    return DCX(RP_BC);
 }
 
-void INRC(void)
+uint8_t INRC(void)
 {
-    INR(WR_C);
+    return INR(WR_C);
 }
 
-void DCRC(void)
+uint8_t DCRC(void)
 {
-    DCR(WR_C);
+    return DCR(WR_C);
 }
 
-void MVIC(void)
+uint8_t MVIC(void)
 {
-    MVI(WR_C);
+    return MVI(WR_C);
 }
 
-void RRC(void)
+uint8_t RRC(void)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     uint8_t bit0 = A & 0x01 ? 1 : 0;
@@ -391,39 +485,41 @@ void RRC(void)
     }
 
     RegFile_WriteReg(F, WR_F);
+
+    return 4;
 }
 
-void LXID(void)
+uint8_t LXID(void)
 {
-    LXI(RP_DE);
+    return LXI(RP_DE);
 }
 
-void STAXD(void)
+uint8_t STAXD(void)
 {
-    STAX(RP_DE);
+    return STAX(RP_DE);
 }
 
-void INXD(void)
+uint8_t INXD(void)
 {
-    INX(RP_DE);
+    return INX(RP_DE);
 }
 
-void INRD(void)
+uint8_t INRD(void)
 {
-    INR(WR_D);
+    return INR(WR_D);
 }
 
-void DCRD(void)
+uint8_t DCRD(void)
 {
-    DCR(WR_D);
+    return DCR(WR_D);
 }
 
-void MVID(void)
+uint8_t MVID(void)
 {
-    MVI(WR_D);
+    return MVI(WR_D);
 }
 
-void RAL(void)
+uint8_t RAL(void)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
     uint8_t CY = F & (1 << CARRY);
@@ -440,42 +536,43 @@ void RAL(void)
     }
 
     RegFile_WriteReg(F, WR_F);
+
+    return 4;
 }
 
-void DADD(void)
+uint8_t DADD(void)
 {
-    DAD(RP_DE);
+    return DAD(RP_DE);
 }
 
-void LDAXD(void)
+uint8_t LDAXD(void)
 {
-    LDAX(RP_DE);
+    return LDAX(RP_DE);
 }
 
-void DCXD(void)
+uint8_t DCXD(void)
 {
-    DCX(RP_DE);
+    return DCX(RP_DE);
 }
 
-void INRE(void)
+uint8_t INRE(void)
 {
-    INR(WR_E);
+    return INR(WR_E);
 }
 
-void DCRE(void)
+uint8_t DCRE(void)
 {
-    DCR(WR_E);
+    return DCR(WR_E);
 }
 
-void MVIE(void)
+uint8_t MVIE(void)
 {
-    MVI(WR_E);
+    return MVI(WR_E);
 }
 
-void RAR(void)
+uint8_t RAR(void)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
-    uint8_t CY = F & (1 << CARRY);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint8_t bit7 = A & 0x80;
     uint8_t bit0 = A & 0x01;
@@ -490,14 +587,16 @@ void RAR(void)
     }
 
     RegFile_WriteReg(F, WR_F);
+
+    return 4;
 }
 
-void LXIH(void)
+uint8_t LXIH(void)
 {
-    LXI(RP_HL);
+    return LXI(RP_HL);
 }
 
-void SHLD(void)
+uint8_t SHLD(void)
 {
     uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
@@ -509,38 +608,41 @@ void SHLD(void)
 
     Bus_WriteMemory(addr, L);
     Bus_WriteMemory(addr + 1, H);
+
+    return 16;
 }
 
-void INXH(void)
+uint8_t INXH(void)
 {
-    INX(RP_HL);
+    return INX(RP_HL);
 }
 
-void INRH(void)
+uint8_t INRH(void)
 {
-    INR(WR_H);
+    return INR(WR_H);
 }
 
-void DCRH(void)
+uint8_t DCRH(void)
 {
-    DCR(WR_H);
+    return DCR(WR_H);
 }
 
-void MVIH(void)
+uint8_t MVIH(void)
 {
-    MVI(WR_H);
+    return MVI(WR_H);
 }
 
-void DAA(void)
+uint8_t DAA(void)
 {
+    return 4;
 }
 
-void DADH(void)
+uint8_t DADH(void)
 {
-    DAD(RP_HL);
+    return DAD(RP_HL);
 }
 
-void LHLD(void)
+uint8_t LHLD(void)
 {
     uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
@@ -549,43 +651,49 @@ void LHLD(void)
 
     RegFile_WriteReg(WR_L, Bus_ReadMemory(addr));
     RegFile_WriteReg(WR_H, Bus_ReadMemory(addr + 1));
+
+    return 16;
 }
 
-void DCXH(void)
+uint8_t DCXH(void)
 {
-    DCX(RP_HL);
+    return DCX(RP_HL);
 }
 
-void INRL(void)
+uint8_t INRL(void)
 {
-    INR(WR_L);
+    return INR(WR_L);
 }
 
-void DCRL(void)
+uint8_t DCRL(void)
 {
-    DCR(WR_L);
+    return DCR(WR_L);
 }
 
-void MVIL(void)
+uint8_t MVIL(void)
 {
-    MVI(WR_L);
+    return MVI(WR_L);
 }
 
-void CMA(void)
+uint8_t CMA(void)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
     RegFile_WriteReg(WR_A, ~A);
+
+    return 4;
 }
 
-void LXISP(void)
+uint8_t LXISP(void)
 {
     uint8_t byte_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t byte_hi = Bus_ReadMemory(g_cpu.PC++);
 
     g_cpu.SP = (byte_hi << 8) | byte_lo;
+
+    return 10;
 }
 
-void STA(void)
+uint8_t STA(void)
 {
     uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
@@ -594,53 +702,67 @@ void STA(void)
     uint8_t A = RegFile_ReadReg(WR_A);
 
     Bus_WriteMemory(addr, A);
+
+    return 13;
 }
 
-void INXSP(void)
+uint8_t INXSP(void)
 {
     g_cpu.SP++;
+
+    return 5;
 }
 
-void INRM(void)
+uint8_t INRM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
 
     uint8_t m = Bus_ReadMemory(HL);
     Bus_WriteMemory(HL, m + 1);
+
+    return 10;
 }
 
-void DCRM(void)
+uint8_t DCRM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
 
     uint8_t m = Bus_ReadMemory(HL);
     Bus_WriteMemory(HL, m - 1);
+
+    return 10;
 }
 
-void MVIM(void)
+uint8_t MVIM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
 
     Bus_WriteMemory(HL, d8);
+
+    return 10;
 }
 
-void STC(void)
+uint8_t STC(void)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
     F |= (1 << CARRY);
     RegFile_WriteReg(WR_F, F);
+
+    return 4;
 }
 
-void DADSP(void)
+uint8_t DADSP(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint16_t result = HL + g_cpu.SP;
     CPU_UpdateFlagCY(result);
     RegFile_WriteRegPair16(RP_HL, result);
+
+    return 10;
 }
 
-void LDA(void)
+uint8_t LDA(void)
 {
     uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
@@ -648,29 +770,33 @@ void LDA(void)
     uint16_t addr = (addr_hi << 8) | addr_lo;
 
     RegFile_WriteReg(WR_A, Bus_ReadMemory(addr));
+
+    return 13;
 }
 
-void DCXSP(void)
+uint8_t DCXSP(void)
 {
     g_cpu.SP--;
+
+    return 5;
 }
 
-void INRA(void)
+uint8_t INRA(void)
 {
-    INR(WR_A);
+    return INR(WR_A);
 }
 
-void DCRA(void)
+uint8_t DCRA(void)
 {
-    DCR(WR_A);
+    return DCR(WR_A);
 }
 
-void MVIA(void)
+uint8_t MVIA(void)
 {
-    MVI(WR_A);
+    return MVI(WR_A);
 }
 
-void CMC(void)
+uint8_t CMC(void)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
@@ -684,659 +810,678 @@ void CMC(void)
     }
 
     RegFile_WriteReg(WR_F, F);
+
+    return 4;
 }
 
-void MOVBB(void)
+uint8_t MOVBB(void)
 {
-    MOV(WR_B, WR_B);
+    return MOV(WR_B, WR_B);
 }
 
-void MOVBC(void)
+uint8_t MOVBC(void)
 {
-    MOV(WR_B, WR_C);
+    return MOV(WR_B, WR_C);
 }
 
-void MOVBD(void)
+uint8_t MOVBD(void)
 {
-    MOV(WR_B, WR_D);
+    return MOV(WR_B, WR_D);
 }
 
-void MOVBE(void)
+uint8_t MOVBE(void)
 {
-    MOV(WR_B, WR_E);
+    return MOV(WR_B, WR_E);
 }
 
-void MOVBH(void)
+uint8_t MOVBH(void)
 {
-    MOV(WR_B, WR_H);
+    return MOV(WR_B, WR_H);
 }
 
-void MOVBL(void)
+uint8_t MOVBL(void)
 {
-    MOV(WR_B, WR_L);
+    return MOV(WR_B, WR_L);
 }
 
-void MOVBM(void)
+uint8_t MOVBM(void)
 {
-    MOVRM(WR_B);
+    return MOVRM(WR_B);
 }
 
-void MOVBA(void)
+uint8_t MOVBA(void)
 {
-    MOV(WR_B, WR_A);
+    return MOV(WR_B, WR_A);
 }
 
-void MOVCB(void)
+uint8_t MOVCB(void)
 {
-    MOV(WR_C, WR_B);
+    return MOV(WR_C, WR_B);
 }
 
-void MOVCC(void)
+uint8_t MOVCC(void)
 {
-    MOV(WR_C, WR_C);
+    return MOV(WR_C, WR_C);
 }
 
-void MOVCD(void)
+uint8_t MOVCD(void)
 {
-    MOV(WR_C, WR_D);
+    return MOV(WR_C, WR_D);
 }
 
-void MOVCE(void)
+uint8_t MOVCE(void)
 {
-    MOV(WR_C, WR_E);
+    return MOV(WR_C, WR_E);
 }
 
-void MOVCH(void)
+uint8_t MOVCH(void)
 {
-    MOV(WR_C, WR_H);
+    return MOV(WR_C, WR_H);
 }
 
-void MOVCL(void)
+uint8_t MOVCL(void)
 {
-    MOV(WR_C, WR_L);
+    return MOV(WR_C, WR_L);
 }
 
-void MOVCM(void)
+uint8_t MOVCM(void)
 {
-    MOVRM(WR_C);
+    return MOVRM(WR_C);
 }
 
-void MOVCA(void)
+uint8_t MOVCA(void)
 {
-    MOV(WR_C, WR_A);
+    return MOV(WR_C, WR_A);
 }
 
-void MOVDB(void)
+uint8_t MOVDB(void)
 {
-    MOV(WR_D, WR_B);
+    return MOV(WR_D, WR_B);
 }
 
-void MOVDC(void)
+uint8_t MOVDC(void)
 {
-    MOV(WR_D, WR_C);
+    return MOV(WR_D, WR_C);
 }
 
-void MOVDD(void)
+uint8_t MOVDD(void)
 {
-    MOV(WR_D, WR_D);
+    return MOV(WR_D, WR_D);
 }
 
-void MOVDE(void)
+uint8_t MOVDE(void)
 {
-    MOV(WR_D, WR_E);
+    return MOV(WR_D, WR_E);
 }
 
-void MOVDH(void)
+uint8_t MOVDH(void)
 {
-    MOV(WR_D, WR_H);
+    return MOV(WR_D, WR_H);
 }
 
-void MOVDL(void)
+uint8_t MOVDL(void)
 {
-    MOV(WR_D, WR_L);
+    return MOV(WR_D, WR_L);
 }
 
-void MOVDM(void)
+uint8_t MOVDM(void)
 {
-    MOVRM(WR_D);
+    return MOVRM(WR_D);
 }
 
-void MOVDA(void)
+uint8_t MOVDA(void)
 {
-    MOV(WR_D, WR_A);
+    return MOV(WR_D, WR_A);
 }
 
-void MOVEB(void)
+uint8_t MOVEB(void)
 {
-    MOV(WR_E, WR_B);
+    return MOV(WR_E, WR_B);
 }
 
-void MOVEC(void)
+uint8_t MOVEC(void)
 {
-    MOV(WR_E, WR_C);
+    return MOV(WR_E, WR_C);
 }
 
-void MOVED(void)
+uint8_t MOVED(void)
 {
-    MOV(WR_E, WR_D);
+    return MOV(WR_E, WR_D);
 }
 
-void MOVEE(void)
+uint8_t MOVEE(void)
 {
-    MOV(WR_E, WR_E);
+    return MOV(WR_E, WR_E);
 }
 
-void MOVEH(void)
+uint8_t MOVEH(void)
 {
-    MOV(WR_E, WR_H);
+    return MOV(WR_E, WR_H);
 }
 
-void MOVEL(void)
+uint8_t MOVEL(void)
 {
-    MOV(WR_E, WR_L);
+    return MOV(WR_E, WR_L);
 }
 
-void MOVEM(void)
+uint8_t MOVEM(void)
 {
-    MOVRM(WR_E);
+    return MOVRM(WR_E);
 }
 
-void MOVEA(void)
+uint8_t MOVEA(void)
 {
-    MOV(WR_E, WR_A);
+    return MOV(WR_E, WR_A);
 }
 
-void MOVHB(void)
+uint8_t MOVHB(void)
 {
-    MOV(WR_H, WR_B);
+    return MOV(WR_H, WR_B);
 }
 
-void MOVHC(void)
+uint8_t MOVHC(void)
 {
-    MOV(WR_H, WR_C);
+    return MOV(WR_H, WR_C);
 }
 
-void MOVHD(void)
+uint8_t MOVHD(void)
 {
-    MOV(WR_H, WR_D);
+    return MOV(WR_H, WR_D);
 }
 
-void MOVHE(void)
+uint8_t MOVHE(void)
 {
-    MOV(WR_H, WR_E);
+    return MOV(WR_H, WR_E);
 }
 
-void MOVHH(void)
+uint8_t MOVHH(void)
 {
-    MOV(WR_H, WR_H);
+    return MOV(WR_H, WR_H);
 }
 
-void MOVHL(void)
+uint8_t MOVHL(void)
 {
-    MOV(WR_H, WR_L);
+    return MOV(WR_H, WR_L);
 }
 
-void MOVHM(void)
+uint8_t MOVHM(void)
 {
-    MOVRM(WR_H);
+    return MOVRM(WR_H);
 }
 
-void MOVHA(void)
+uint8_t MOVHA(void)
 {
-    MOV(WR_H, WR_A);
+    return MOV(WR_H, WR_A);
 }
 
-void MOVLB(void)
+uint8_t MOVLB(void)
 {
-    MOV(WR_L, WR_B);
+    return MOV(WR_L, WR_B);
 }
 
-void MOVLC(void)
+uint8_t MOVLC(void)
 {
-    MOV(WR_L, WR_C);
+    return MOV(WR_L, WR_C);
 }
 
-void MOVLD(void)
+uint8_t MOVLD(void)
 {
-    MOV(WR_L, WR_D);
+    return MOV(WR_L, WR_D);
 }
 
-void MOVLE(void)
+uint8_t MOVLE(void)
 {
-    MOV(WR_L, WR_E);
+    return MOV(WR_L, WR_E);
 }
 
-void MOVLH(void)
+uint8_t MOVLH(void)
 {
-    MOV(WR_L, WR_H);
+    return MOV(WR_L, WR_H);
 }
 
-void MOVLL(void)
+uint8_t MOVLL(void)
 {
-    MOV(WR_L, WR_L);
+    return MOV(WR_L, WR_L);
 }
 
-void MOVLM(void)
+uint8_t MOVLM(void)
 {
-    MOVRM(WR_L);
+    return MOVRM(WR_L);
 }
 
-void MOVLA(void)
+uint8_t MOVLA(void)
 {
-    MOV(WR_L, WR_A);
+    return MOV(WR_L, WR_A);
 }
 
-void MOVMB(void)
+uint8_t MOVMB(void)
 {
-    MOVMR(WR_B);
+    return MOVMR(WR_B);
 }
 
-void MOVMC(void)
+uint8_t MOVMC(void)
 {
-    MOVMR(WR_C);
+    return MOVMR(WR_C);
 }
 
-void MOVMD(void)
+uint8_t MOVMD(void)
 {
-    MOVMR(WR_D);
+    return MOVMR(WR_D);
 }
 
-void MOVME(void)
+uint8_t MOVME(void)
 {
-    MOVMR(WR_E);
+    return MOVMR(WR_E);
 }
 
-void MOVMH(void)
+uint8_t MOVMH(void)
 {
-    MOVMR(WR_H);
+    return MOVMR(WR_H);
 }
 
-void MOVML(void)
+uint8_t MOVML(void)
 {
-    MOVMR(WR_L);
+    return MOVMR(WR_L);
 }
 
-void HLT(void) {}
+uint8_t HLT(void)
+{
+    return 7;
+}
 
-void MOVMA(void)
+uint8_t MOVMA(void)
 {
-    MOVMR(WR_A);
+    return MOVMR(WR_A);
 }
 
-void MOVAB(void)
+uint8_t MOVAB(void)
 {
-    MOV(WR_A, WR_B);
+    return MOV(WR_A, WR_B);
 }
 
-void MOVAC(void)
+uint8_t MOVAC(void)
 {
-    MOV(WR_A, WR_C);
+    return MOV(WR_A, WR_C);
 }
 
-void MOVAD(void)
+uint8_t MOVAD(void)
 {
-    MOV(WR_A, WR_D);
+    return MOV(WR_A, WR_D);
 }
 
-void MOVAE(void)
+uint8_t MOVAE(void)
 {
-    MOV(WR_A, WR_E);
+    return MOV(WR_A, WR_E);
 }
 
-void MOVAH(void)
+uint8_t MOVAH(void)
 {
-    MOVMR(WR_A, WR_H);
+    return MOV(WR_A, WR_H);
 }
 
-void MOVAL(void)
+uint8_t MOVAL(void)
 {
-    MOV(WR_A, WR_L);
+    return MOV(WR_A, WR_L);
 }
 
-void MOVAM(void)
+uint8_t MOVAM(void)
 {
-    MOVRM(WR_A);
+    return MOVRM(WR_A);
 }
 
-void MOVAA(void)
+uint8_t MOVAA(void)
 {
-    MOV(WR_A, WR_A);
+    return MOV(WR_A, WR_A);
 }
 
-void ADDB(void)
+uint8_t ADDB(void)
 {
-    ADD(WR_B);
+    return ADD(WR_B);
 }
 
-void ADDC(void)
+uint8_t ADDC(void)
 {
-    ADD(WR_C);
+    return ADD(WR_C);
 }
 
-void ADDD(void)
+uint8_t ADDD(void)
 {
-    ADD(WR_D);
+    return ADD(WR_D);
 }
 
-void ADDE(void)
+uint8_t ADDE(void)
 {
-    ADD(WR_E);
+    return ADD(WR_E);
 }
 
-void ADDH(void)
+uint8_t ADDH(void)
 {
-    ADD(WR_H);
+    return ADD(WR_H);
 }
 
-void ADDL(void)
+uint8_t ADDL(void)
 {
-    ADD(WR_L);
+    return ADD(WR_L);
 }
 
-void ADDM(void)
+uint8_t ADDM(void)
 {
     uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
     RegFile_WriteReg(WR_A, A + m);
+
+    return 7;
 }
 
-void ADDA(void)
+uint8_t ADDA(void)
 {
-    ADD(WR_A);
+    return ADD(WR_A);
 }
 
-void ADCB(void)
+uint8_t ADCB(void)
 {
-    ADC(WR_B);
+    return ADC(WR_B);
 }
 
-void ADCC(void)
+uint8_t ADCC(void)
 {
-    ADC(WR_C);
+    return ADC(WR_C);
 }
 
-void ADCD(void)
+uint8_t ADCD(void)
 {
-    ADC(WR_D);
+    return ADC(WR_D);
 }
 
-void ADCE(void)
+uint8_t ADCE(void)
 {
-    ADC(WR_E);
+    return ADC(WR_E);
 }
 
-void ADCH(void)
+uint8_t ADCH(void)
 {
-    ADC(WR_H);
+    return ADC(WR_H);
 }
 
-void ADCL(void)
+uint8_t ADCL(void)
 {
-    ADC(WR_L);
+    return ADC(WR_L);
 }
 
-void ADCM(void)
+uint8_t ADCM(void)
 {
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t m = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
 
     RegFile_WriteReg(WR_A, A + m + carry);
+
+    return 7;
 }
 
-void ADCA(void)
+uint8_t ADCA(void)
 {
-    ADC(WR_A);
+    return ADC(WR_A);
 }
 
-void SUBB(void)
+uint8_t SUBB(void)
 {
-    SUB(WR_B);
+    return SUB(WR_B);
 }
 
-void SUBC(void)
+uint8_t SUBC(void)
 {
-    SUB(WR_C);
+    return SUB(WR_C);
 }
 
-void SUBD(void)
+uint8_t SUBD(void)
 {
-    SUB(WR_D);
+    return SUB(WR_D);
 }
 
-void SUBE(void)
+uint8_t SUBE(void)
 {
-    SUB(WR_E);
+    return SUB(WR_E);
 }
 
-void SUBH(void)
+uint8_t SUBH(void)
 {
-    SUB(WR_H);
+    return SUB(WR_H);
 }
 
-void SUBL(void)
+uint8_t SUBL(void)
 {
-    SUB(WR_L);
+    return SUB(WR_L);
 }
 
-void SUBM(void)
+uint8_t SUBM(void)
 {
     uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
     RegFile_WriteReg(WR_A, A - m);
+
+    return 7;
 }
 
-void SUBA(void)
+uint8_t SUBA(void)
 {
-    SUB(WR_A);
+    return SUB(WR_A);
 }
 
-void SBBB(void)
+uint8_t SBBB(void)
 {
-    SBB(WR_B);
+    return SBB(WR_B);
 }
 
-void SBBC(void)
+uint8_t SBBC(void)
 {
-    SBB(WR_C);
+    return SBB(WR_C);
 }
 
-void SBBD(void)
+uint8_t SBBD(void)
 {
-    SBB(WR_D);
+    return SBB(WR_D);
 }
 
-void SBBE(void)
+uint8_t SBBE(void)
 {
-    SBB(WR_E);
+    return SBB(WR_E);
 }
 
-void SBBH(void)
+uint8_t SBBH(void)
 {
-    SBB(WR_H);
+    return SBB(WR_H);
 }
 
-void SBBL(void)
+uint8_t SBBL(void)
 {
-    SBB(WR_L);
+    return SBB(WR_L);
 }
 
-void SBBM(void)
+uint8_t SBBM(void)
 {
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t m = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
 
     RegFile_WriteReg(WR_A, A - m - carry);
+
+    return 7;
 }
 
-void SBBA(void)
+uint8_t SBBA(void)
 {
-    SBB(WR_A);
+    return SBB(WR_A);
 }
 
-void ANAB(void)
+uint8_t ANAB(void)
 {
-    ANA(WR_B);
+    return ANA(WR_B);
 }
 
-void ANAC(void)
+uint8_t ANAC(void)
 {
-    ANA(WR_C);
+    return ANA(WR_C);
 }
 
-void ANAD(void)
+uint8_t ANAD(void)
 {
-    ANA(WR_D);
+    return ANA(WR_D);
 }
 
-void ANAE(void)
+uint8_t ANAE(void)
 {
-    ANA(WR_E);
+    return ANA(WR_E);
 }
 
-void ANAH(void)
+uint8_t ANAH(void)
 {
-    ANA(WR_H);
+    return ANA(WR_H);
 }
 
-void ANAL(void)
+uint8_t ANAL(void)
 {
-    ANA(WR_L);
+    return ANA(WR_L);
 }
 
-void ANAM(void)
+uint8_t ANAM(void)
 {
     uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
     RegFile_WriteReg(WR_A, A & m);
+
+    return 7;
 }
 
-void ANAA(void)
+uint8_t ANAA(void)
 {
-    ANA(WR_A);
+    return ANA(WR_A);
 }
 
-void XRAB(void)
+uint8_t XRAB(void)
 {
-    XRA(WR_B);
+    return XRA(WR_B);
 }
 
-void XRAC(void)
+uint8_t XRAC(void)
 {
-    XRA(WR_C);
+    return XRA(WR_C);
 }
 
-void XRAD(void)
+uint8_t XRAD(void)
 {
-    XRA(WR_D);
+    return XRA(WR_D);
 }
 
-void XRAE(void)
+uint8_t XRAE(void)
 {
-    XRA(WR_E);
+    return XRA(WR_E);
 }
 
-void XRAH(void)
+uint8_t XRAH(void)
 {
-    XRA(WR_H);
+    return XRA(WR_H);
 }
 
-void XRAL(void)
+uint8_t XRAL(void)
 {
-    XRA(WR_L);
+    return XRA(WR_L);
 }
 
-void XRAM(void)
+uint8_t XRAM(void)
 {
     uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
     RegFile_WriteReg(WR_A, A ^ m);
+
+    return 7;
 }
 
-void XRAA(void)
+uint8_t XRAA(void)
 {
-    XRA(WR_A);
+    return XRA(WR_A);
 }
 
-void ORAB(void)
+uint8_t ORAB(void)
 {
-    ORA(WR_B);
+    return ORA(WR_B);
 }
 
-void ORAC(void)
+uint8_t ORAC(void)
 {
-    ORA(WR_C);
+    return ORA(WR_C);
 }
 
-void ORAD(void)
+uint8_t ORAD(void)
 {
-    ORA(WR_D);
+    return ORA(WR_D);
 }
 
-void ORAE(void)
+uint8_t ORAE(void)
 {
-    ORA(WR_E);
+    return ORA(WR_E);
 }
 
-void ORAH(void)
+uint8_t ORAH(void)
 {
-    ORA(WR_H);
+    return ORA(WR_H);
 }
 
-void ORAL(void)
+uint8_t ORAL(void)
 {
-    ORA(WR_L);
+    return ORA(WR_L);
 }
 
-void ORAM(void)
+uint8_t ORAM(void)
 {
     uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
     RegFile_WriteReg(WR_A, A | m);
+
+    return 7;
 }
 
-void ORAA(void)
+uint8_t ORAA(void)
 {
-    ORA(WR_A);
+    return ORA(WR_A);
 }
 
-void CMPB(void)
+uint8_t CMPB(void)
 {
-    CMP(WR_B);
+    return CMP(WR_B);
 }
 
-void CMPC(void)
+uint8_t CMPC(void)
 {
-    CMP(WR_C);
+    return CMP(WR_C);
 }
 
-void CMPD(void)
+uint8_t CMPD(void)
 {
-    CMP(WR_D);
+    return CMP(WR_D);
 }
 
-void CMPE(void)
+uint8_t CMPE(void)
 {
-    CMP(WR_E);
+    return CMP(WR_E);
 }
 
-void CMPH(void)
+uint8_t CMPH(void)
 {
-    CMP(WR_H);
+    return CMP(WR_H);
 }
 
-void CMPL(void)
+uint8_t CMPL(void)
 {
-    CMP(WR_L);
+    return CMP(WR_L);
 }
 
-void CMPM(void)
+uint8_t CMPM(void)
 {
     uint8_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
@@ -1344,63 +1489,66 @@ void CMPM(void)
 
     CPU_UpdateFlagZSPCYAC(A - m);
 
+    return 7;
 }
 
-void CMPA(void)
+uint8_t CMPA(void)
 {
-    CMP(WR_A);
+    return CMP(WR_A);
 }
 
-void RNZ(void)
+uint8_t RNZ(void)
 {
-    RET_IF(ZERO, false);
+    return RET_IF(ZERO, false);
 }
 
-void POPB(void)
+uint8_t POPB(void)
 {
-    POP(RP_BC);
+    return POP(RP_BC);
 }
 
-void JNZ(void)
+uint8_t JNZ(void)
 {
-    JMP_IF(ZERO, false);
+    return JMP_IF(ZERO, false);
 }
 
-void CNZ(void)
+uint8_t CNZ(void)
 {
-    CALL_IF(ZERO, false);
+    return CALL_IF(ZERO, false);
 }
 
-void PUSHB(void)
+uint8_t PUSHB(void)
 {
-    PUSH(RP_BC);
+    return PUSH(RP_BC);
 }
 
-void ADI(void)
+uint8_t ADI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A + d8;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RZ(void)
+uint8_t RZ(void)
 {
-    RET_IF(ZERO, true);
+    return RET_IF(ZERO, true);
 }
 
-void JZ(void)
+uint8_t JZ(void)
 {
-    JMP_IF(ZERO, true);
+    return JMP_IF(ZERO, true);
 }
 
-void CZ(void)
+uint8_t CZ(void)
 {
-    CALL_IF(ZERO, true);
+    return CALL_IF(ZERO, true);
 }
 
-void ACI(void)
+uint8_t ACI(void)
 {
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
@@ -1408,70 +1556,78 @@ void ACI(void)
     uint16_t result = A + d8 + carry;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RNC(void)
+uint8_t RNC(void)
 {
-    RET_IF(CARRY, false);
+    return RET_IF(CARRY, false);
 }
 
-void POPD(void)
+uint8_t POPD(void)
 {
-    POP(RP_DE);
+    return POP(RP_DE);
 }
 
-void JNC(void)
+uint8_t JNC(void)
 {
-    JMP_IF(CARRY, false);
+    return JMP_IF(CARRY, false);
 }
 
-void OUT(void)
+uint8_t OUT(void)
 {
     uint8_t port = Bus_ReadMemory(g_cpu.PC++);
     Bus_WritePort((IoPort)port, RegFile_ReadReg(WR_A));
+
+    return 10;
 }
 
-void CNC(void)
+uint8_t CNC(void)
 {
-    CALL_IF(CARRY, false);
+    return CALL_IF(CARRY, false);
 }
 
-void PUSHD(void)
+uint8_t PUSHD(void)
 {
-    PUSH(RP_DE);
+    return PUSH(RP_DE);
 }
 
-void SUI(void)
+uint8_t SUI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A - d8;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RC(void)
+uint8_t RC(void)
 {
-    RET_IF(CARRY, true);
+    return RET_IF(CARRY, true);
 }
 
-void JC(void)
+uint8_t JC(void)
 {
-    JMP_IF(CARRY, true);
+    return JMP_IF(CARRY, true);
 }
 
-void IN(void)
+uint8_t IN(void)
 {
     uint8_t port = Bus_ReadMemory(g_cpu.PC++);
     RegFile_WriteReg(WR_A, Bus_ReadPort((IoPort)port));
+
+    return 10;
 }
 
-void CC(void)
+uint8_t CC(void)
 {
-    CALL_IF(CARRY, true);
+    return CALL_IF(CARRY, true);
 }
 
-void SBI(void)
+uint8_t SBI(void)
 {
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
@@ -1479,24 +1635,26 @@ void SBI(void)
     uint16_t result = A - d8 - carry;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RPO(void)
+uint8_t RPO(void)
 {
-    RET_IF(PARITY, true);
+    return RET_IF(PARITY, true);
 }
 
-void POPH(void)
+uint8_t POPH(void)
 {
-    POP(RP_HL);
+    return POP(RP_HL);
 }
 
-void JPO(void)
+uint8_t JPO(void)
 {
-    JMP_IF(PARITY, true);
+    return JMP_IF(PARITY, true);
 }
 
-void XTHL(void)
+uint8_t XTHL(void)
 {
     uint8_t H = RegFile_ReadReg(WR_H);
     uint8_t L = RegFile_ReadReg(WR_L);
@@ -1506,132 +1664,148 @@ void XTHL(void)
 
     Bus_WriteMemory(g_cpu.SP, L);
     Bus_WriteMemory(g_cpu.SP + 1, H);
+
+    return 18;
 }
 
-void CPO(void)
+uint8_t CPO(void)
 {
-    CALL_IF(PARITY, true);
+    return CALL_IF(PARITY, true);
 }
 
-void PUSHH(void)
+uint8_t PUSHH(void)
 {
-    PUSH(RP_HL);
+    return PUSH(RP_HL);
 }
 
-void ANI(void)
+uint8_t ANI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A & d8;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RPE(void)
+uint8_t RPE(void)
 {
-    RET_IF(PARITY, false);
+    return RET_IF(PARITY, false);
 }
 
-void PCHL(void)
+uint8_t PCHL(void)
 {
     g_cpu.PC = RegFile_ReadRegPair(RP_HL);
+    return 5;
 }
 
-void JPE(void)
+uint8_t JPE(void)
 {
-    JMP_IF(PARITY, false);
+    return JMP_IF(PARITY, false);
 }
 
-void XCHG(void)
+uint8_t XCHG(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint16_t DE = RegFile_ReadRegPair(RP_DE);
 
     RegFile_WriteRegPair16(RP_HL, DE);
     RegFile_WriteRegPair16(RP_DE, HL);
+
+    return 5;
 }
 
-void CPE(void)
+uint8_t CPE(void)
 {
-    CALL_IF(PARITY, false);
+    return CALL_IF(PARITY, false);
 }
 
-void XRI(void)
+uint8_t XRI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A ^ d8;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RP(void)
+uint8_t RP(void)
 {
-    RET_IF(SIGN, false);
+    return RET_IF(SIGN, false);
 }
 
-void POPPSW(void)
+uint8_t POPPSW(void)
 {
-    POP(RP_PSW);
+    return POP(RP_PSW);
 }
 
-void JP(void)
+uint8_t JP(void)
 {
-    JMP_IF(SIGN, false);
+    return JMP_IF(SIGN, false);
 }
 
-void DI(void)
+uint8_t DI(void)
 {
-    g_cpu.interrupts_enabled = false;
+    g_cpu.interruptsEnabled = false;
+
+    return 4;
 }
 
-void CP(void)
+uint8_t CP(void)
 {
-    CALL_IF(SIGN, false);
+    return CALL_IF(SIGN, false);
 }
 
-void PUSHPSW(void)
+uint8_t PUSHPSW(void)
 {
-    PUSH(RP_PSW);
+    return PUSH(RP_PSW);
 }
 
-void ORI(void)
+uint8_t ORI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     uint16_t result = A | d8;
     CPU_UpdateFlagZSPCYAC(result);
     RegFile_WriteReg(WR_A, result);
+
+    return 7;
 }
 
-void RM(void)
+uint8_t RM(void)
 {
-    RET_IF(SIGN, true);
+    return RET_IF(SIGN, true);
 }
 
-void SPHL(void)
+uint8_t SPHL(void)
 {
     g_cpu.SP = RegFile_ReadRegPair(RP_HL);
+    return 5;
 }
 
-void JM(void)
+uint8_t JM(void)
 {
-    JMP_IF(SIGN, true);
+    return JMP_IF(SIGN, true);
 }
 
-void EI(void)
+uint8_t EI(void)
 {
-    g_cpu.interrupts_enabled = true;
+    g_cpu.interruptsEnabled = true;
+    return 7;
 }
 
-void CM(void)
+uint8_t CM(void)
 {
-    CALL_IF(SIGN, true);
+    return CALL_IF(SIGN, true);
 }
 
-void CPI(void)
+uint8_t CPI(void)
 {
     uint8_t d8 = Bus_ReadMemory(g_cpu.PC++);
     uint8_t A = RegFile_ReadReg(WR_A);
     CPU_UpdateFlagZSPCYAC(A - d8);
+    return 7;
 }

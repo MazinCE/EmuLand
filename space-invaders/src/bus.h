@@ -6,8 +6,7 @@
 
 typedef enum
 {
-    INP0 = 0,
-    INP1,
+    INP1 = 1,
     INP2_OR_SHFTAMNT,
     SHFT_IN,
     SOUND1,
