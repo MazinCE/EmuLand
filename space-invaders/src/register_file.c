@@ -23,9 +23,8 @@ void RegFile_WriteReg(WorkRegister reg, uint8_t val)
 
 void RegFile_WriteRegPair8(RegisterPair regPair, uint8_t upper, uint8_t lower)
 {
-    uint8_t *registerPairs = TO_UINT8_ARRAY(g_regFile);
-    registerPairs[regPair] = upper;
-    registerPairs[regPair + 1] = lower;
+    uint16_t *registerPairs = TO_UINT16_ARRAY(g_regFile);
+    registerPairs[regPair] = (upper << 8) | lower;
 }
 
 void RegFile_WriteRegPair16(RegisterPair regPair, uint16_t val)

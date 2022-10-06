@@ -8,19 +8,19 @@
 
 typedef enum
 {
+    WR_C = 0,
     WR_B,
-    WR_C,
-    WR_D,
     WR_E,
-    WR_H,
+    WR_D,
     WR_L,
+    WR_H,
     WR_F,
     WR_A,
 } WorkRegister;
 
 typedef enum
 {
-    RP_BC,
+    RP_BC = 0,
     RP_DE,
     RP_HL,
     RP_PSW,

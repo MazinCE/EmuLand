@@ -1,6 +1,6 @@
 #include "cpu.h"
 #include "bus.h"
-#include <stdio.h>
+#include <SDL.h>
 
 CPU g_cpu;
 
@@ -21,9 +21,8 @@ uint32_t CPU_Tick(void)
     if (execute)
     {
         g_cpu.cycles += execute();
+        SDL_Log("PC = %x\n", g_cpu.PC);
     }
-
-    // printf("opcode = %X\n", opcode);
 
     return g_cpu.cycles;
 }
@@ -44,7 +43,7 @@ void CPU_UpdateFlagCY(uint16_t testVal)
         F |= (1 << CARRY);
     }
 
-    RegFile_WriteReg(F, WR_F);
+    RegFile_WriteReg(WR_F, F);
 }
 
 void CPU_UpdateFlagAC(uint8_t testVal)
@@ -58,16 +57,16 @@ void CPU_UpdateFlagAC(uint8_t testVal)
         F |= (1 << AUX);
     }
 
-    RegFile_WriteReg(F, WR_F);
+    RegFile_WriteReg(WR_F, F);
 }
 
 void CPU_UpdateFlagZSPAC(uint16_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
-    uint8_t CY = F & (1 << CARRY);
-
     F = 0;
+
+    uint8_t CY = F & (1 << CARRY) ? 1 : 0;
 
     if (CY)
     {
@@ -98,7 +97,7 @@ void CPU_UpdateFlagZSPAC(uint16_t testVal)
         F |= (1 << PARITY);
     }
 
-    RegFile_WriteReg(F, WR_F);
+    RegFile_WriteReg(WR_F, F);
 }
 
 void CPU_UpdateFlagZSPCYAC(uint16_t testVal)
@@ -327,11 +326,11 @@ uint8_t RET(void)
 
 uint8_t CALL(void)
 {
-    uint8_t PCH = g_cpu.PC >> 8;
-    uint8_t PCL = g_cpu.PC & 0xFF;
+    uint8_t pch = g_cpu.PC >> 8;
+    uint8_t pcl = g_cpu.PC & 0xFF;
 
-    Bus_WriteMemory(--g_cpu.SP, PCH);
-    Bus_WriteMemory(--g_cpu.SP, PCL);
+    Bus_WriteMemory(--g_cpu.SP, pch);
+    Bus_WriteMemory(--g_cpu.SP, pcl);
 
     JMP();
 
@@ -699,9 +698,8 @@ uint8_t STA(void)
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
 
     uint16_t addr = (addr_hi << 8) | addr_lo;
-    uint8_t A = RegFile_ReadReg(WR_A);
 
-    Bus_WriteMemory(addr, A);
+    Bus_WriteMemory(addr, RegFile_ReadReg(WR_A));
 
     return 13;
 }

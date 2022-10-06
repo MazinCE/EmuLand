@@ -10,8 +10,6 @@ void Arcade_Init(void)
     Bus_Init();
     CPU_Init();
     Display_Init();
-
-    Display_SetPixel(4, 6);
 }
 
 void Arcade_Destroy(void)
@@ -123,7 +121,7 @@ void Arcade_Draw(void)
 {
     for (uint8_t y = 0; y < ARCADE_WINDOW_HEIGHT; ++y)
     {
-        for (uint8_t x = 0; x < ARCADE_WINDOW_WIDTH / 8; ++x)
+        for (uint8_t x = 0; x < (ARCADE_WINDOW_WIDTH / 8); ++x)
         {
             uint8_t sprite = Bus_ReadMemory(0x2400 + (x + y * 32));
 
@@ -136,4 +134,6 @@ void Arcade_Draw(void)
             }
         }
     }
+
+    Display_Render();
 }

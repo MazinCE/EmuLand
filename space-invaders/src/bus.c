@@ -1,5 +1,6 @@
 #include "bus.h"
 #include <stdio.h>
+#include <SDL.h>
 
 Bus g_bus;
 
@@ -56,7 +57,7 @@ void Bus_WritePort(IoPort port, uint8_t data)
 
 uint8_t Bus_ReadMemory(uint16_t addr)
 {
-    if (addr >= 0x0000 && addr <= 0x2000)
+    if (addr <= 0x2000)
     {
         return Memory_Read(g_bus.rom, addr);
     }
