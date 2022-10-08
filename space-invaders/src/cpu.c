@@ -1,27 +1,47 @@
 #include "cpu.h"
-#include "bus.h"
-#include <SDL.h>
+#include <stdio.h>
 
 CPU g_cpu;
 
 void CPU_Init(void)
 {
     CPU_CreateInstructionTable();
+    RegFile_WriteReg(WR_F, 0x02);
     g_cpu.interruptsEnabled = false;
     g_cpu.cycles = 0;
+
+#if CPUDIAG
+    g_cpu.PC = 0x0100;
+#else
     g_cpu.PC = 0x0000;
+#endif
 }
 
 uint32_t CPU_Tick(void)
 {
     uint8_t opcode = Bus_ReadMemory(g_cpu.PC++);
 
+#if CPUDIAG
+    printf("OP=%x\n", opcode);
+    printf("PC=%x\n", g_cpu.PC - 1);
+    // printf("SP=%x\n", g_cpu.SP);
+    // printf("C=%x\n", RegFile_ReadReg(WR_C));
+    // printf("B=%x\n", RegFile_ReadReg(WR_B));
+    // printf("E=%x\n", RegFile_ReadReg(WR_E));
+    // printf("D=%x\n", RegFile_ReadReg(WR_D));
+    // printf("L=%x\n", RegFile_ReadReg(WR_L));
+    // printf("H=%x\n", RegFile_ReadReg(WR_H));
+    printf("F=%x\n", RegFile_ReadReg(WR_F));
+    // printf("A=%x\n", RegFile_ReadReg(WR_A));
+    // printf("Cycles = %d", g_cpu.cycles);
+    getchar();
+#endif
+
     InstructionFn execute = g_cpu.instructionTable[opcode];
 
     if (execute)
     {
         g_cpu.cycles += execute();
-        SDL_Log("PC = %x\n", g_cpu.PC);
     }
 
     return g_cpu.cycles;
@@ -32,7 +52,41 @@ void CPU_ResetTicks(void)
     g_cpu.cycles = 0;
 }
 
-void CPU_UpdateFlagCY(uint16_t testVal)
+void CPU_Interrupt(uint8_t rst)
+{
+    if (g_cpu.interruptsEnabled)
+    {
+        DI();
+        CALL();
+
+        g_cpu.PC = rst * 8;
+        g_cpu.cycles += 11;
+    }
+}
+
+void CPU_Diag(void)
+{
+    uint8_t C = RegFile_ReadReg(WR_C);
+
+    if (C == 9)
+    {
+        uint16_t offset = RegFile_ReadRegPair(RP_DE);
+
+        offset += 3; // skip prefix bytes
+
+        uint8_t chr = Bus_ReadMemory(offset);
+        while (chr != '$')
+        {
+            printf("%c", chr);
+            offset += 1;
+            chr = Bus_ReadMemory(offset);
+        }
+
+        printf("\n");
+    }
+}
+
+void CPU_UpdateFlagCY(uint32_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
@@ -46,27 +100,13 @@ void CPU_UpdateFlagCY(uint16_t testVal)
     RegFile_WriteReg(WR_F, F);
 }
 
-void CPU_UpdateFlagAC(uint8_t testVal)
+void CPU_UpdateFlagZSPAC(uint8_t testVal)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
 
-    F &= ~(1 << AUX);
+    F = 0x02;
 
-    if (testVal > 0x0F)
-    {
-        F |= (1 << AUX);
-    }
-
-    RegFile_WriteReg(WR_F, F);
-}
-
-void CPU_UpdateFlagZSPAC(uint16_t testVal)
-{
-    uint8_t F = RegFile_ReadReg(WR_F);
-
-    F = 0;
-
-    uint8_t CY = F & (1 << CARRY) ? 1 : 0;
+    uint8_t CY = F & (1 << CARRY);
 
     if (CY)
     {
@@ -83,16 +123,14 @@ void CPU_UpdateFlagZSPAC(uint16_t testVal)
         F |= (1 << SIGN);
     }
 
-    uint8_t testByte = testVal & 0xFF;
-
     uint8_t P = 0;
 
     for (uint8_t i = 0; i < 8; ++i)
     {
-        P ^= 1 & (testByte >> i);
+        P ^= 1 & (testVal >> i);
     }
 
-    if (P)
+    if (!P)
     {
         F |= (1 << PARITY);
     }
@@ -100,7 +138,7 @@ void CPU_UpdateFlagZSPAC(uint16_t testVal)
     RegFile_WriteReg(WR_F, F);
 }
 
-void CPU_UpdateFlagZSPCYAC(uint16_t testVal)
+void CPU_UpdateFlagZSPCYAC(uint32_t testVal)
 {
     CPU_UpdateFlagZSPAC(testVal);
     CPU_UpdateFlagCY(testVal);
@@ -119,9 +157,7 @@ uint8_t LXI(RegisterPair regPair)
 uint8_t STAX(RegisterPair regPair)
 {
     uint16_t rp = RegFile_ReadRegPair(regPair);
-    uint8_t A = RegFile_ReadReg(WR_A);
-
-    Bus_WriteMemory(rp, A);
+    Bus_WriteMemory(rp, RegFile_ReadReg(WR_A));
 
     return 7;
 }
@@ -139,7 +175,7 @@ uint8_t INR(WorkRegister reg)
     uint8_t r = RegFile_ReadReg(reg);
     uint16_t result = r + 1;
     CPU_UpdateFlagZSPAC(result);
-    RegFile_WriteReg(reg, result & 0xFF);
+    RegFile_WriteReg(reg, result);
 
     return 5;
 }
@@ -149,7 +185,7 @@ uint8_t DCR(WorkRegister reg)
     uint8_t r = RegFile_ReadReg(reg);
     uint16_t result = r - 1;
     CPU_UpdateFlagZSPAC(result);
-    RegFile_WriteReg(reg, result & 0xFF);
+    RegFile_WriteReg(reg, result);
 
     return 5;
 }
@@ -309,8 +345,9 @@ uint8_t JMP(void)
 {
     uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
     uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
+    uint16_t addr = (addr_hi << 8) | addr_lo;
 
-    g_cpu.PC = (addr_hi << 8) | addr_lo;
+    g_cpu.PC = addr;
 
     return 10;
 }
@@ -326,23 +363,37 @@ uint8_t RET(void)
 
 uint8_t CALL(void)
 {
+    uint8_t addr_lo = Bus_ReadMemory(g_cpu.PC++);
+    uint8_t addr_hi = Bus_ReadMemory(g_cpu.PC++);
+    uint16_t addr = (addr_hi << 8) | addr_lo;
+
+#if CPUDIAG
+    if (addr == 5)
+    {
+        CPU_Diag();
+    }
+#endif
+
     uint8_t pch = g_cpu.PC >> 8;
     uint8_t pcl = g_cpu.PC & 0xFF;
 
     Bus_WriteMemory(--g_cpu.SP, pch);
     Bus_WriteMemory(--g_cpu.SP, pcl);
 
-    JMP();
+    g_cpu.PC = addr;
 
     return 17;
 }
 
 uint8_t PUSH(RegisterPair regPair)
 {
-    uint8_t upper = Bus_ReadMemory(--g_cpu.SP);
-    uint8_t lower = Bus_ReadMemory(--g_cpu.SP);
+    uint16_t rp = RegFile_ReadRegPair(regPair);
 
-    RegFile_WriteRegPair8(regPair, upper, lower);
+    uint8_t rph = rp >> 8;
+    uint8_t rpl = rp & 0xFF;
+
+    Bus_WriteMemory(--g_cpu.SP, rph);
+    Bus_WriteMemory(--g_cpu.SP, rpl);
 
     return 11;
 }
@@ -356,6 +407,8 @@ uint8_t JMP_IF(CPU_Flag flag, bool cond)
         return JMP();
     }
 
+    g_cpu.PC += 2;
+
     return 10;
 }
 
@@ -367,6 +420,8 @@ uint8_t CALL_IF(CPU_Flag flag, bool cond)
     {
         return CALL();
     }
+
+    g_cpu.PC += 2;
 
     return 11;
 }
@@ -435,6 +490,9 @@ uint8_t RLC(void)
         F |= (1 << CARRY);
     }
 
+    RegFile_WriteReg(WR_A, A);
+    RegFile_WriteReg(WR_F, F);
+
     return 4;
 }
 
@@ -483,7 +541,8 @@ uint8_t RRC(void)
         F |= (1 << CARRY);
     }
 
-    RegFile_WriteReg(F, WR_F);
+    RegFile_WriteReg(WR_A, A);
+    RegFile_WriteReg(WR_F, F);
 
     return 4;
 }
@@ -534,7 +593,8 @@ uint8_t RAL(void)
         F |= (1 << CARRY);
     }
 
-    RegFile_WriteReg(F, WR_F);
+    RegFile_WriteReg(WR_A, A);
+    RegFile_WriteReg(WR_F, F);
 
     return 4;
 }
@@ -585,7 +645,8 @@ uint8_t RAR(void)
         F |= (1 << CARRY);
     }
 
-    RegFile_WriteReg(F, WR_F);
+    RegFile_WriteReg(WR_A, A);
+    RegFile_WriteReg(WR_F, F);
 
     return 4;
 }
@@ -714,7 +775,6 @@ uint8_t INXSP(void)
 uint8_t INRM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
-
     uint8_t m = Bus_ReadMemory(HL);
     Bus_WriteMemory(HL, m + 1);
 
@@ -724,7 +784,6 @@ uint8_t INRM(void)
 uint8_t DCRM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
-
     uint8_t m = Bus_ReadMemory(HL);
     Bus_WriteMemory(HL, m - 1);
 
@@ -1164,10 +1223,12 @@ uint8_t ADDL(void)
 
 uint8_t ADDM(void)
 {
-    uint8_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
-    RegFile_WriteReg(WR_A, A + m);
+    uint16_t result = A + m;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1209,11 +1270,13 @@ uint8_t ADCL(void)
 
 uint8_t ADCM(void)
 {
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
-    uint8_t m = Bus_ReadMemory(g_cpu.PC++);
+    uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
-
-    RegFile_WriteReg(WR_A, A + m + carry);
+    uint16_t result = A + m + carry;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1255,10 +1318,13 @@ uint8_t SUBL(void)
 
 uint8_t SUBM(void)
 {
-    uint8_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
-    RegFile_WriteReg(WR_A, A - m);
+
+    uint16_t result = A - m;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1300,11 +1366,14 @@ uint8_t SBBL(void)
 
 uint8_t SBBM(void)
 {
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t carry = RegFile_ReadReg(WR_F) & (1 << CARRY) ? 1 : 0;
-    uint8_t m = Bus_ReadMemory(g_cpu.PC++);
+    uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
 
-    RegFile_WriteReg(WR_A, A - m - carry);
+    uint16_t result = A - m - carry;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1346,10 +1415,13 @@ uint8_t ANAL(void)
 
 uint8_t ANAM(void)
 {
-    uint8_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
-    RegFile_WriteReg(WR_A, A & m);
+
+    uint16_t result = A & m;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1391,10 +1463,13 @@ uint8_t XRAL(void)
 
 uint8_t XRAM(void)
 {
-    uint8_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
-    RegFile_WriteReg(WR_A, A ^ m);
+
+    uint16_t result = A ^ m;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1436,10 +1511,13 @@ uint8_t ORAL(void)
 
 uint8_t ORAM(void)
 {
-    uint8_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
-    RegFile_WriteReg(WR_A, A | m);
+
+    uint16_t result = A | m;
+    CPU_UpdateFlagZSPCYAC(result);
+    RegFile_WriteReg(WR_A, result);
 
     return 7;
 }
@@ -1481,7 +1559,7 @@ uint8_t CMPL(void)
 
 uint8_t CMPM(void)
 {
-    uint8_t HL = RegFile_ReadRegPair(RP_HL);
+    uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
     uint8_t A = RegFile_ReadReg(WR_A);
 
@@ -1576,7 +1654,7 @@ uint8_t JNC(void)
 uint8_t OUT(void)
 {
     uint8_t port = Bus_ReadMemory(g_cpu.PC++);
-    Bus_WritePort((IoPort)port, RegFile_ReadReg(WR_A));
+    Bus_WritePort(port, RegFile_ReadReg(WR_A));
 
     return 10;
 }
@@ -1615,7 +1693,7 @@ uint8_t JC(void)
 uint8_t IN(void)
 {
     uint8_t port = Bus_ReadMemory(g_cpu.PC++);
-    RegFile_WriteReg(WR_A, Bus_ReadPort((IoPort)port));
+    RegFile_WriteReg(WR_A, Bus_ReadPort(port));
 
     return 10;
 }
@@ -1639,7 +1717,7 @@ uint8_t SBI(void)
 
 uint8_t RPO(void)
 {
-    return RET_IF(PARITY, true);
+    return RET_IF(PARITY, false);
 }
 
 uint8_t POPH(void)
@@ -1649,7 +1727,7 @@ uint8_t POPH(void)
 
 uint8_t JPO(void)
 {
-    return JMP_IF(PARITY, true);
+    return JMP_IF(PARITY, false);
 }
 
 uint8_t XTHL(void)
@@ -1668,7 +1746,7 @@ uint8_t XTHL(void)
 
 uint8_t CPO(void)
 {
-    return CALL_IF(PARITY, true);
+    return CALL_IF(PARITY, false);
 }
 
 uint8_t PUSHH(void)
@@ -1689,7 +1767,7 @@ uint8_t ANI(void)
 
 uint8_t RPE(void)
 {
-    return RET_IF(PARITY, false);
+    return RET_IF(PARITY, true);
 }
 
 uint8_t PCHL(void)
@@ -1700,7 +1778,7 @@ uint8_t PCHL(void)
 
 uint8_t JPE(void)
 {
-    return JMP_IF(PARITY, false);
+    return JMP_IF(PARITY, true);
 }
 
 uint8_t XCHG(void)
@@ -1716,7 +1794,7 @@ uint8_t XCHG(void)
 
 uint8_t CPE(void)
 {
-    return CALL_IF(PARITY, false);
+    return CALL_IF(PARITY, true);
 }
 
 uint8_t XRI(void)

@@ -4,14 +4,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "register_file.h"
+#include "bus.h"
 
 typedef enum
 {
-    SIGN   = 7,
-    ZERO   = 6,
-    AUX    = 4,
-    PARITY = 2,
     CARRY  = 0,
+    PARITY = 2,
+    AUX    = 4,
+    ZERO   = 6,
+    SIGN   = 7,
+
 } CPU_Flag;
 
 typedef uint8_t (*InstructionFn)(void);
@@ -32,11 +34,14 @@ void CPU_Init(void);
 void CPU_CreateInstructionTable(void);
 uint32_t CPU_Tick(void);
 void CPU_ResetTicks(void);
+void CPU_Interrupt(uint8_t rst);
 
-void CPU_UpdateFlagCY(uint16_t testVal);
-void CPU_UpdateFlagAC(uint8_t testVal);
-void CPU_UpdateFlagZSPAC(uint16_t testVal);
-void CPU_UpdateFlagZSPCYAC(uint16_t testVal);
+void CPU_Diag(void);
+
+void CPU_UpdateFlagCY(uint32_t testVal);
+// void CPU_UpdateFlagAC(uint8_t testVal);
+void CPU_UpdateFlagZSPAC(uint8_t testVal);
+void CPU_UpdateFlagZSPCYAC(uint32_t testVal);
 
 // Common
 uint8_t LXI(RegisterPair regPair);

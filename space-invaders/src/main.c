@@ -1,4 +1,6 @@
 #include "arcade.h"
+#include "register_file.h"
+#include <stdio.h>
 
 int main(void)
 {

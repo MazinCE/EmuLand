@@ -4,13 +4,15 @@
 #include <stdint.h>
 #include "memory.h"
 
+#define CPUDIAG 0
+
 typedef enum
 {
     INP1 = 1,
     INP2_OR_SHFTAMNT,
     SHFT_IN,
-    SOUND1,
     SHFT_DATA,
+    SOUND1,
     SOUND2,
     MAX_PORTS,
 
@@ -21,8 +23,8 @@ typedef struct
     Memory *rom;
     Memory *ram;
     Memory *vram;
-    uint16_t shift_register;
-    uint8_t io_ports[MAX_PORTS];
+    uint16_t shiftReg;
+    uint8_t ioPorts[MAX_PORTS];
 
 } Bus;
 

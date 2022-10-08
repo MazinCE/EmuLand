@@ -9,13 +9,17 @@ void Arcade_Init(void)
 {
     Bus_Init();
     CPU_Init();
+#if !CPUDIAG
     Display_Init();
+#endif
 }
 
 void Arcade_Destroy(void)
 {
     Bus_Destroy();
+#if !CPUDIAG
     Display_Destroy();
+#endif
 }
 
 void Arcade_ReadInput(SDL_Event e)
@@ -80,7 +84,9 @@ void Arcade_Run(void)
 {
     bool quit = false;
     SDL_Event e;
+
     float dt = 0;
+    uint8_t interrputNum = 1;
 
     clock_t last, now;
 
@@ -89,7 +95,7 @@ void Arcade_Run(void)
     while (!quit)
     {
         now = clock();
-        dt += (float)(now - last) / ARCADE_TICKS_PERFRAME;
+        dt += (float)(now - last) / ARCADE_TICKS_PER_FRAME;
 
         while (SDL_PollEvent(&e))
         {
@@ -110,8 +116,11 @@ void Arcade_Run(void)
 
             CPU_ResetTicks();
 
-            while (CPU_Tick() < ARCADE_TICKS_PERFRAME)
+            while (CPU_Tick() < ARCADE_TICKS_PER_FRAME)
                 ;
+
+            CPU_Interrupt(interrputNum);
+            interrputNum = interrputNum == 1 ? 2 : 1;
             Arcade_Draw();
         }
     }
@@ -123,13 +132,13 @@ void Arcade_Draw(void)
     {
         for (uint8_t x = 0; x < (ARCADE_WINDOW_WIDTH / 8); ++x)
         {
-            uint8_t sprite = Bus_ReadMemory(0x2400 + (x + y * 32));
+            uint8_t sprite = Bus_ReadMemory(0x2400 + (x + y * (ARCADE_WINDOW_WIDTH / 8)));
 
             for (uint8_t i = 0; i < 8; ++i)
             {
                 if (sprite & (1 << i))
                 {
-                    Display_SetPixel(ARCADE_WINDOW_WIDTH - (8 * x + i), y);
+                    Display_SetPixel(8 * x + i, y);
                 }
             }
         }
