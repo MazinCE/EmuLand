@@ -17,13 +17,13 @@ void CPU_Init(void)
 #endif
 }
 
-uint32_t CPU_Tick(void)
+void CPU_Tick(void)
 {
     uint8_t opcode = Bus_ReadMemory(g_cpu.PC++);
 
 #if CPUDIAG
-    printf("OP=%x\n", opcode);
-    printf("PC=%x\n", g_cpu.PC - 1);
+    // printf("OP=%x\n", opcode);
+    // printf("PC=%x\n", g_cpu.PC - 1);
     // printf("SP=%x\n", g_cpu.SP);
     // printf("C=%x\n", RegFile_ReadReg(WR_C));
     // printf("B=%x\n", RegFile_ReadReg(WR_B));
@@ -31,10 +31,10 @@ uint32_t CPU_Tick(void)
     // printf("D=%x\n", RegFile_ReadReg(WR_D));
     // printf("L=%x\n", RegFile_ReadReg(WR_L));
     // printf("H=%x\n", RegFile_ReadReg(WR_H));
-    printf("F=%x\n", RegFile_ReadReg(WR_F));
+    // printf("F=%x\n", RegFile_ReadReg(WR_F));
     // printf("A=%x\n", RegFile_ReadReg(WR_A));
     // printf("Cycles = %d", g_cpu.cycles);
-    getchar();
+    // getchar();
 #endif
 
     InstructionFn execute = g_cpu.instructionTable[opcode];
@@ -43,8 +43,6 @@ uint32_t CPU_Tick(void)
     {
         g_cpu.cycles += execute();
     }
-
-    return g_cpu.cycles;
 }
 
 void CPU_ResetTicks(void)
@@ -57,11 +55,21 @@ void CPU_Interrupt(uint8_t rst)
     if (g_cpu.interruptsEnabled)
     {
         DI();
-        CALL();
+
+        uint8_t pch = g_cpu.PC >> 8;
+        uint8_t pcl = g_cpu.PC & 0xFF;
+
+        Bus_WriteMemory(--g_cpu.SP, pch);
+        Bus_WriteMemory(--g_cpu.SP, pcl);
 
         g_cpu.PC = rst * 8;
         g_cpu.cycles += 11;
     }
+}
+
+uint32_t CPU_GetCycles(void)
+{
+    return g_cpu.cycles;
 }
 
 void CPU_Diag(void)
@@ -133,6 +141,11 @@ void CPU_UpdateFlagZSPAC(uint8_t testVal)
     if (!P)
     {
         F |= (1 << PARITY);
+    }
+
+    if ((testVal & 0x1F) > 0x0F)
+    {
+        F |= (1 << AUX);
     }
 
     RegFile_WriteReg(WR_F, F);

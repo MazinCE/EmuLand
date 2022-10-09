@@ -30,7 +30,6 @@ CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/register_file.h
 
 CMakeFiles/space-invaders.dir/src/main.c.o: ../src/arcade.h
 CMakeFiles/space-invaders.dir/src/main.c.o: ../src/main.c
-CMakeFiles/space-invaders.dir/src/main.c.o: ../src/register_file.h
 
 CMakeFiles/space-invaders.dir/src/memory.c.o: ../src/memory.c
 CMakeFiles/space-invaders.dir/src/memory.c.o: ../src/memory.h

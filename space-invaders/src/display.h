@@ -4,8 +4,8 @@
 #include <SDL2/SDL.h>
 #include <stdint.h>
 
-#define SDL_WINDOW_WIDTH 640
-#define SDL_WINDOW_HEIGHT 480
+#define SDL_WINDOW_WIDTH 512
+#define SDL_WINDOW_HEIGHT 448
 
 #define ARCADE_WINDOW_WIDTH 256
 #define ARCADE_WINDOW_HEIGHT 224
@@ -22,6 +22,7 @@ typedef struct
 void Display_Init(void);
 void Display_Destroy(void);
 
+void Display_ClearFrameBuffer(void);
 void Display_Render(void);
 void Display_SetPixel(uint8_t x, uint8_t y);
 

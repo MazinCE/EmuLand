@@ -32,9 +32,11 @@ extern CPU g_cpu;
 
 void CPU_Init(void);
 void CPU_CreateInstructionTable(void);
-uint32_t CPU_Tick(void);
+void CPU_Tick(void);
 void CPU_ResetTicks(void);
 void CPU_Interrupt(uint8_t rst);
+
+uint32_t CPU_GetCycles(void);
 
 void CPU_Diag(void);
 

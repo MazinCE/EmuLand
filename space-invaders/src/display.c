@@ -25,9 +25,9 @@ void Display_Init(void)
                                   ARCADE_WINDOW_WIDTH,
                                   ARCADE_WINDOW_HEIGHT);
 
-    SDL_RenderSetScale(g_dis.ren,
-                       SDL_WINDOW_WIDTH / ARCADE_WINDOW_WIDTH,
-                       SDL_WINDOW_HEIGHT / ARCADE_WINDOW_HEIGHT);
+    // SDL_RenderSetScale(g_dis.ren,
+    //                    SDL_WINDOW_WIDTH / ARCADE_WINDOW_WIDTH,
+    //                    SDL_WINDOW_HEIGHT / ARCADE_WINDOW_HEIGHT);
 }
 
 void Display_Destroy(void)
@@ -38,14 +38,17 @@ void Display_Destroy(void)
     SDL_Quit();
 }
 
+void Display_ClearFrameBuffer(void)
+{
+    memset(g_dis.frameBuffer, 0x00000000, sizeof(g_dis.frameBuffer));
+}
+
 void Display_Render(void)
 {
     SDL_RenderClear(g_dis.ren);
     SDL_UpdateTexture(g_dis.scr, 0, g_dis.frameBuffer, ARCADE_WINDOW_WIDTH * sizeof(uint32_t));
     SDL_RenderCopy(g_dis.ren, g_dis.scr, 0, 0);
     SDL_RenderPresent(g_dis.ren);
-
-    memset(g_dis.frameBuffer, 0, sizeof(g_dis.frameBuffer));
 }
 
 void Display_SetPixel(uint8_t x, uint8_t y)

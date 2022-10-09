@@ -85,8 +85,9 @@ void Arcade_Run(void)
     bool quit = false;
     SDL_Event e;
 
-    float dt = 0;
+    float dt = 0.0f;
     uint8_t interrputNum = 1;
+    uint32_t hCycles = 0;
 
     clock_t last, now;
 
@@ -95,7 +96,6 @@ void Arcade_Run(void)
     while (!quit)
     {
         now = clock();
-        dt += (float)(now - last) / ARCADE_TICKS_PER_FRAME;
 
         while (SDL_PollEvent(&e))
         {
@@ -111,23 +111,35 @@ void Arcade_Run(void)
 
         if (dt > ARCADE_MS_PERFRAME)
         {
-            dt = 0.0f;
-            last = now;
-
             CPU_ResetTicks();
+            hCycles = 0;
 
-            while (CPU_Tick() < ARCADE_TICKS_PER_FRAME)
-                ;
+            while (CPU_GetCycles() < ARCADE_TICKS_PER_FRAME)
+            {
+                CPU_Tick();
 
-            CPU_Interrupt(interrputNum);
-            interrputNum = interrputNum == 1 ? 2 : 1;
-            Arcade_Draw();
+                if (CPU_GetCycles() - hCycles >= ARCADE_TICKS_PER_HALF_FRAME)
+                {
+                    CPU_Interrupt(interrputNum);
+                    interrputNum = interrputNum == 1 ? 2 : 1;
+                    hCycles = CPU_GetCycles();
+                }
+            }
+
+            Arcade_Display();
+
+            dt = 0.0f;
+            last = clock();
         }
+
+        dt += (float)(now - last) / ARCADE_TICKS_PER_FRAME;
     }
 }
 
-void Arcade_Draw(void)
+void Arcade_Display(void)
 {
+    Display_ClearFrameBuffer();
+
     for (uint8_t y = 0; y < ARCADE_WINDOW_HEIGHT; ++y)
     {
         for (uint8_t x = 0; x < (ARCADE_WINDOW_WIDTH / 8); ++x)

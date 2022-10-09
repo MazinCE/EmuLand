@@ -24,9 +24,13 @@ typedef struct
     Memory *ram;
     Memory *vram;
     uint16_t shiftReg;
+    uint8_t shamt;
     uint8_t ioPorts[MAX_PORTS];
 
 } Bus;
+
+extern Bus g_bus;
+
 
 void Bus_Init(void);
 void Bus_Destroy(void);
