@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "register_file.h": "c"
+        "register_file.h": "c",
+        "time.h": "c"
     }
 }

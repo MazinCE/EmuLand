@@ -5,9 +5,6 @@ project(space-invaders)
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-find_package(GTK REQUIRED)
-include_directories(${GTK_INCLUDE_DIRS})
-
 set(CMAKE_C_FLAGS "-Wall -Wextra")
 set(CMAKE_C_FLAGS_DEBUG "-g")
 set(CMAKE_C_FLAGS_RELEASE "-O3")

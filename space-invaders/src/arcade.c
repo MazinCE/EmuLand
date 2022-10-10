@@ -2,8 +2,9 @@
 #include "bus.h"
 #include "cpu.h"
 #include "display.h"
-#include <time.h>
 #include <unistd.h>
+
+Arcade g_Arcade;
 
 void Arcade_Init(void)
 {
@@ -12,6 +13,12 @@ void Arcade_Init(void)
 #if !CPUDIAG
     Display_Init();
 #endif
+
+    g_Arcade.frameElapsedTime = 0.0f;
+    g_Arcade.interrputNum = 0;
+    g_Arcade.running = true;
+    g_Arcade.frameHalfCycles = 0;
+    g_Arcade.lastUpdate = clock();
 }
 
 void Arcade_Destroy(void)
@@ -31,23 +38,46 @@ void Arcade_ReadInput(SDL_Event e)
     {
         switch (e.key.keysym.sym)
         {
-        case SDLK_RETURN:
-            port1 |= (1 << 2);
+        case SDLK_c:
+            port1 |= (1 << INSERT_COIN);
+            break;
+        case SDLK_1:
+            port1 |= (1 << BTN_1PLAYER);
+            break;
+        case SDLK_2:
+            port1 |= (1 << BTN_2PLAYERS);
+            break;
+        case SDLK_3:
+            port2 |= (1 << DIP_NUM_SHIPS_B0);
+            break;
+        case SDLK_4:
+            port2 |= (1 << DIP_NUM_SHIPS_B1);
+            break;
+        case SDLK_5:
+            port2 |= (1 << DIP_DIFFICULTY);
+            break;
+        case SDLK_6:
+            port2 |= (1 << DIP_COIN_INFO);
             break;
         case SDLK_a:
-            port1 |= (1 << 5);
+            port1 |= (1 << BTN_P1_LEFT);
             break;
         case SDLK_d:
-            port1 |= (1 << 6);
+            port1 |= (1 << BTN_P1_RIGHT);
             break;
-        case SDLK_t:
-            port2 |= (1 << 2);
+        case SDLK_w:
+            port1 |= (1 << BTN_P1_FIRE);
             break;
-        case SDLK_c:
-            port1 |= (1 << 0);
+        case SDLK_LEFT:
+            port2 |= (1 >> BTN_P2_LEFT);
             break;
-        case SDLK_SPACE:
-            port1 |= (1 << 4);
+        case SDLK_RIGHT:
+            port2 |= (1 >> BTN_P2_RIGHT);
+            break;
+        case SDLK_UP:
+            port2 |= (1 >> BTN_P2_FIRE);
+            break;
+        default:
             break;
         }
     }
@@ -55,106 +85,119 @@ void Arcade_ReadInput(SDL_Event e)
     {
         switch (e.key.keysym.sym)
         {
-        case SDLK_RETURN:
-            port1 &= ~(1 << 2);
+        case SDLK_c:
+            port1 &= ~(1 << INSERT_COIN);
+            break;
+        case SDLK_1:
+            port1 &= ~(1 << BTN_1PLAYER);
+            break;
+        case SDLK_2:
+            port1 &= ~(1 << BTN_2PLAYERS);
+            break;
+        case SDLK_3:
+            port2 &= ~(1 << DIP_NUM_SHIPS_B0);
+            break;
+        case SDLK_4:
+            port2 &= ~(1 << DIP_NUM_SHIPS_B1);
+            break;
+        case SDLK_5:
+            port2 &= ~(1 << DIP_DIFFICULTY);
+            break;
+        case SDLK_6:
+            port2 &= ~(1 << DIP_COIN_INFO);
             break;
         case SDLK_a:
-            port1 &= ~(1 << 5);
+            port1 &= ~(1 << BTN_P1_LEFT);
             break;
         case SDLK_d:
-            port1 &= ~(1 << 6);
+            port1 &= ~(1 << BTN_P1_RIGHT);
             break;
-        case SDLK_t:
-            port2 &= ~(1 << 2);
+        case SDLK_w:
+            port1 &= ~(1 << BTN_P1_FIRE);
             break;
-        case SDLK_c:
-            port1 &= ~(1 << 0);
+        case SDLK_LEFT:
+            port2 &= ~(1 >> BTN_P2_LEFT);
             break;
-        case SDLK_SPACE:
-            port1 &= ~(1 << 4);
+        case SDLK_RIGHT:
+            port2 &= ~(1 >> BTN_P2_RIGHT);
+            break;
+        case SDLK_UP:
+            port2 &= ~(1 >> BTN_P2_FIRE);
+            break;
+        default:
             break;
         }
+
+        Bus_WritePort(INP1, port1);
+        Bus_WritePort(INP2_OR_SHFTAMNT, port2);
     }
 
-    Bus_WritePort(INP1, port1);
-    Bus_WritePort(INP2_OR_SHFTAMNT, port2);
-}
-
-void Arcade_Run(void)
-{
-    bool quit = false;
-    SDL_Event e;
-
-    float dt = 0.0f;
-    uint8_t interrputNum = 1;
-    uint32_t hCycles = 0;
-
-    clock_t last, now;
-
-    last = clock();
-
-    while (!quit)
+    void Arcade_Run(void)
     {
-        now = clock();
+        SDL_Event e;
 
-        while (SDL_PollEvent(&e))
+        while (g_Arcade.running)
         {
-            if (e.type == SDL_QUIT)
-            {
-                quit = true;
-            }
-            else
-            {
-                Arcade_ReadInput(e);
-            }
-        }
+            clock_t now = clock();
 
-        if (dt > ARCADE_MS_PERFRAME)
-        {
-            CPU_ResetTicks();
-            hCycles = 0;
-
-            while (CPU_GetCycles() < ARCADE_TICKS_PER_FRAME)
+            while (SDL_PollEvent(&e))
             {
-                CPU_Tick();
-
-                if (CPU_GetCycles() - hCycles >= ARCADE_TICKS_PER_HALF_FRAME)
+                if (e.type == SDL_QUIT)
                 {
-                    CPU_Interrupt(interrputNum);
-                    interrputNum = interrputNum == 1 ? 2 : 1;
-                    hCycles = CPU_GetCycles();
+                    g_Arcade.running = false;
+                }
+                else
+                {
+                    Arcade_ReadInput(e);
                 }
             }
 
-            Arcade_Display();
-
-            dt = 0.0f;
-            last = clock();
-        }
-
-        dt += (float)(now - last) / ARCADE_TICKS_PER_FRAME;
-    }
-}
-
-void Arcade_Display(void)
-{
-    Display_ClearFrameBuffer();
-
-    for (uint8_t y = 0; y < ARCADE_WINDOW_HEIGHT; ++y)
-    {
-        for (uint8_t x = 0; x < (ARCADE_WINDOW_WIDTH / 8); ++x)
-        {
-            uint8_t sprite = Bus_ReadMemory(0x2400 + (x + y * (ARCADE_WINDOW_WIDTH / 8)));
-
-            for (uint8_t i = 0; i < 8; ++i)
+            if (g_Arcade.frameElapsedTime > ARCADE_MS_PERFRAME)
             {
-                if (sprite & (1 << i))
+                CPU_ResetTicks();
+                hCycles = 0;
+
+                while (CPU_GetCycles() < ARCADE_TICKS_PER_FRAME)
                 {
-                    Display_SetPixel(8 * x + i, y);
+                    CPU_Tick();
+
+                    if (CPU_GetCycles() - g_Arcade.frameHalfCycles >= ARCADE_TICKS_PER_HALF_FRAME)
+                    {
+                        CPU_Interrupt(g_Arcade.interrputNum);
+                        g_Arcade.interrputNum = g_Arcade.interrputNum == 1 ? 2 : 1;
+                        g_Arcade.frameHalfCycles = CPU_GetCycles();
+                    }
+                }
+
+                Arcade_Display();
+
+                g_Arcade.frameElapsedTime = 0.0f;
+                g_Arcade.lastUpdate = clock();
+            }
+
+            dt += (float)(now - g_Arcade.lastUpdate) / ARCADE_TICKS_PER_FRAME;
+        }
+    }
+
+    void Arcade_Display(void)
+    {
+        Display_ClearFrameBuffer();
+
+        for (uint8_t y = 0; y < ARCADE_WINDOW_HEIGHT; ++y)
+        {
+            for (uint8_t x = 0; x < (ARCADE_WINDOW_WIDTH / 8); ++x)
+            {
+                uint8_t sprite = Bus_ReadMemory(0x2400 + (x + y * (ARCADE_WINDOW_WIDTH / 8)));
+
+                for (uint8_t i = 0; i < 8; ++i)
+                {
+                    if (sprite & (1 << i))
+                    {
+                        Display_SetPixel(8 * x + i, y);
+                    }
                 }
             }
         }
-    }
 
-    Display_Render();
-}
+        Display_Render();
+    }
