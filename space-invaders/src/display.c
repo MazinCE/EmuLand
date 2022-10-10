@@ -7,7 +7,6 @@ void Display_Init(void)
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
         printf("SDL_ERROR: %s\n", SDL_GetError());
-        return;
     }
 
     g_dis.win = SDL_CreateWindow("Space Invaders",
@@ -25,9 +24,7 @@ void Display_Init(void)
                                   ARCADE_WINDOW_WIDTH,
                                   ARCADE_WINDOW_HEIGHT);
 
-    // SDL_RenderSetScale(g_dis.ren,
-    //                    SDL_WINDOW_WIDTH / ARCADE_WINDOW_WIDTH,
-    //                    SDL_WINDOW_HEIGHT / ARCADE_WINDOW_HEIGHT);
+    SDL_RenderSetScale(g_dis.ren, 2, 2);
 }
 
 void Display_Destroy(void)
@@ -47,11 +44,13 @@ void Display_Render(void)
 {
     SDL_RenderClear(g_dis.ren);
     SDL_UpdateTexture(g_dis.scr, 0, g_dis.frameBuffer, ARCADE_WINDOW_WIDTH * sizeof(uint32_t));
-    SDL_RenderCopy(g_dis.ren, g_dis.scr, 0, 0);
+    SDL_RenderCopyEx(g_dis.ren, g_dis.scr, 0, 0, 0.0, 0, 0);
     SDL_RenderPresent(g_dis.ren);
 }
 
 void Display_SetPixel(uint8_t x, uint8_t y)
 {
-    g_dis.frameBuffer[x + y * ARCADE_WINDOW_WIDTH] = 0xFFFFFFFF;
+    uint32_t color = 0xFFFFFF;
+
+    g_dis.frameBuffer[x + y * ARCADE_WINDOW_WIDTH] = color;
 }

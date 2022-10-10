@@ -542,11 +542,11 @@ uint8_t MVIC(void)
 uint8_t RRC(void)
 {
     uint8_t A = RegFile_ReadReg(WR_A);
+    uint8_t F = RegFile_ReadReg(WR_F);
     uint8_t bit0 = A & 0x01 ? 1 : 0;
 
     A = (A >> 1) | (bit0 << 7);
 
-    uint8_t F = RegFile_ReadReg(WR_F);
     F &= ~(1 << CARRY);
 
     if (bit0)
@@ -646,10 +646,11 @@ uint8_t RAR(void)
 {
     uint8_t F = RegFile_ReadReg(WR_F);
     uint8_t A = RegFile_ReadReg(WR_A);
-    uint8_t bit7 = A & 0x80;
-    uint8_t bit0 = A & 0x01;
 
-    A = (A >> 1) | bit7;
+    uint8_t bit0 = A & 0x01;
+    uint8_t carry = F & (1 << CARRY) ? 1 : 0;
+
+    A = (A >> 1) | (carry << 7);
 
     F &= ~(1 << CARRY);
 
@@ -789,7 +790,9 @@ uint8_t INRM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    Bus_WriteMemory(HL, m + 1);
+    uint16_t result = m + 1;
+    CPU_UpdateFlagZSPAC(result);
+    Bus_WriteMemory(HL, result);
 
     return 10;
 }
@@ -798,7 +801,9 @@ uint8_t DCRM(void)
 {
     uint16_t HL = RegFile_ReadRegPair(RP_HL);
     uint8_t m = Bus_ReadMemory(HL);
-    Bus_WriteMemory(HL, m - 1);
+    uint16_t result = m - 1;
+    CPU_UpdateFlagZSPAC(result);
+    Bus_WriteMemory(HL, result);
 
     return 10;
 }

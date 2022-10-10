@@ -40,6 +40,10 @@ register_file.h
 bus.h
 /home/mazin/Documents/dev/Emulators/space-invaders/src/bus.h
 
+/home/mazin/Documents/dev/Emulators/space-invaders/src/display.c
+display.h
+/home/mazin/Documents/dev/Emulators/space-invaders/src/display.h
+
 /home/mazin/Documents/dev/Emulators/space-invaders/src/display.h
 SDL2/SDL.h
 -
