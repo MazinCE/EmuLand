@@ -1,5 +1,5 @@
 #include "bus.h"
-#include <stdio.h>
+#include "sound.h"
 
 Bus g_bus;
 
@@ -24,6 +24,8 @@ void Bus_Init(void)
     Memory_LoadFromFile(g_bus.rom, 0x1000, "../rom/invaders.f");
     Memory_LoadFromFile(g_bus.rom, 0x1800, "../rom/invaders.e");
 #endif
+
+    Sound_Init();
 }
 
 void Bus_Destroy(void)
@@ -31,32 +33,39 @@ void Bus_Destroy(void)
     Memory_Destroy(g_bus.rom);
     Memory_Destroy(g_bus.ram);
     Memory_Destroy(g_bus.vram);
+    Sound_Destroy();
 }
 
-uint8_t Bus_ReadPort(IoPort port)
+uint8_t Bus_ReadPort(uint8_t portNum)
 {
-    if (port == SHFT_IN)
+    if (portNum == SHFT_IN)
     {
-        return g_bus.shiftReg >> (8 - g_bus.shamt);
+        return g_bus.shiftReg >> (8 - g_bus.port[INP2_OR_SHFTAMNT].out);
     }
 
-    return g_bus.ioPorts[port];
+    return g_bus.port[portNum].in;
 }
 
-void Bus_WritePort(IoPort port, uint8_t data)
+void Bus_WritePort(uint8_t portNum, uint8_t data)
 {
-    if (port == SHFT_DATA)
+    if (portNum == SHFT_DATA)
     {
         g_bus.shiftReg = (g_bus.shiftReg >> 8) | (data << 8);
     }
-    else if (port == INP2_OR_SHFTAMNT)
+    else if (portNum == SOUND1 || portNum == SOUND2)
     {
-        g_bus.shamt = data & 0x07;
+        Sound_Play(portNum, data, g_bus.port[portNum].out);
+        g_bus.port[portNum].out = data;
     }
     else
     {
-        g_bus.ioPorts[port] = data;
+        g_bus.port[portNum].out = data;
     }
+}
+
+void Bus_SetInputPort(uint8_t portNum, uint8_t data)
+{
+    g_bus.port[portNum].in = data;
 }
 
 uint8_t Bus_ReadMemory(uint16_t addr)

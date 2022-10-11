@@ -14,3 +14,4 @@ file(GLOB SRC "src/*.c")
 add_executable(space-invaders ${SRC})
 
 target_link_libraries(space-invaders ${SDL2_LIBRARIES})
+target_link_libraries(space-invaders -ldl -lpthread -lm)

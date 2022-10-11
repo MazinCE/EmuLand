@@ -3,20 +3,23 @@
 
 #include <stdint.h>
 #include "memory.h"
+#include "miniaudio.h"
 
 #define CPUDIAG 0
 
-typedef enum
-{
-    INP1 = 1,
-    INP2_OR_SHFTAMNT,
-    SHFT_IN,
-    SHFT_DATA,
-    SOUND1,
-    SOUND2,
-    MAX_PORTS,
+#define INP1 1
+#define INP2_OR_SHFTAMNT 2
+#define SHFT_IN 3
+#define SHFT_DATA 4
+#define SOUND1 3
+#define SOUND2 5
+#define NO_PORT 8
 
-} IoPort;
+typedef struct
+{
+    uint8_t out;
+    uint8_t in;
+} Port;
 
 typedef struct
 {
@@ -24,19 +27,18 @@ typedef struct
     Memory *ram;
     Memory *vram;
     uint16_t shiftReg;
-    uint8_t shamt;
-    uint8_t ioPorts[MAX_PORTS];
-
+    ma_engine audioEngine;
+    Port port[NO_PORT];
 } Bus;
 
 extern Bus g_bus;
 
-
 void Bus_Init(void);
 void Bus_Destroy(void);
 
-uint8_t Bus_ReadPort(IoPort port);
-void Bus_WritePort(IoPort port, uint8_t data);
+uint8_t Bus_ReadPort(uint8_t portNum);
+void Bus_WritePort(uint8_t portNum, uint8_t data);
+void Bus_SetInputPort(uint8_t portNum, uint8_t data);
 
 uint8_t Bus_ReadMemory(uint16_t addr);
 void Bus_WriteMemory(uint16_t addr, uint8_t data);

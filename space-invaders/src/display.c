@@ -44,7 +44,7 @@ void Display_Render(void)
 {
     SDL_RenderClear(g_dis.ren);
     SDL_UpdateTexture(g_dis.scr, 0, g_dis.frameBuffer, ARCADE_WINDOW_WIDTH * sizeof(uint32_t));
-    SDL_RenderCopyEx(g_dis.ren, g_dis.scr, 0, 0, 0.0, 0, 0);
+    SDL_RenderCopyEx(g_dis.ren, g_dis.scr, 0, 0, -90.0, 0, 0);
     SDL_RenderPresent(g_dis.ren);
 }
 

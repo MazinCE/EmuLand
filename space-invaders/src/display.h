@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #define SDL_WINDOW_WIDTH 512
-#define SDL_WINDOW_HEIGHT 448
+#define SDL_WINDOW_HEIGHT 512
 
 #define ARCADE_WINDOW_WIDTH 256
 #define ARCADE_WINDOW_HEIGHT 224
