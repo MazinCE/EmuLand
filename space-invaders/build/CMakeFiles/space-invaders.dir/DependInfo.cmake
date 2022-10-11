@@ -12,6 +12,7 @@ set(CMAKE_DEPENDS_CHECK_C
   "/home/mazin/Documents/dev/Emulators/space-invaders/src/main.c" "/home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles/space-invaders.dir/src/main.c.o"
   "/home/mazin/Documents/dev/Emulators/space-invaders/src/memory.c" "/home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles/space-invaders.dir/src/memory.c.o"
   "/home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.c" "/home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles/space-invaders.dir/src/register_file.c.o"
+  "/home/mazin/Documents/dev/Emulators/space-invaders/src/sound.c" "/home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles/space-invaders.dir/src/sound.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

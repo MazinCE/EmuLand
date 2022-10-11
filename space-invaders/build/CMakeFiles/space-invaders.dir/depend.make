@@ -7,16 +7,20 @@ CMakeFiles/space-invaders.dir/src/arcade.c.o: ../src/bus.h
 CMakeFiles/space-invaders.dir/src/arcade.c.o: ../src/cpu.h
 CMakeFiles/space-invaders.dir/src/arcade.c.o: ../src/display.h
 CMakeFiles/space-invaders.dir/src/arcade.c.o: ../src/memory.h
+CMakeFiles/space-invaders.dir/src/arcade.c.o: ../src/miniaudio.h
 CMakeFiles/space-invaders.dir/src/arcade.c.o: ../src/register_file.h
 
 CMakeFiles/space-invaders.dir/src/bus.c.o: ../src/bus.c
 CMakeFiles/space-invaders.dir/src/bus.c.o: ../src/bus.h
 CMakeFiles/space-invaders.dir/src/bus.c.o: ../src/memory.h
+CMakeFiles/space-invaders.dir/src/bus.c.o: ../src/miniaudio.h
+CMakeFiles/space-invaders.dir/src/bus.c.o: ../src/sound.h
 
 CMakeFiles/space-invaders.dir/src/cpu.c.o: ../src/bus.h
 CMakeFiles/space-invaders.dir/src/cpu.c.o: ../src/cpu.c
 CMakeFiles/space-invaders.dir/src/cpu.c.o: ../src/cpu.h
 CMakeFiles/space-invaders.dir/src/cpu.c.o: ../src/memory.h
+CMakeFiles/space-invaders.dir/src/cpu.c.o: ../src/miniaudio.h
 CMakeFiles/space-invaders.dir/src/cpu.c.o: ../src/register_file.h
 
 CMakeFiles/space-invaders.dir/src/display.c.o: ../src/display.c
@@ -26,14 +30,20 @@ CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/bus.h
 CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/cpu.h
 CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/instruction_table.c
 CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/memory.h
+CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/miniaudio.h
 CMakeFiles/space-invaders.dir/src/instruction_table.c.o: ../src/register_file.h
 
 CMakeFiles/space-invaders.dir/src/main.c.o: ../src/arcade.h
 CMakeFiles/space-invaders.dir/src/main.c.o: ../src/main.c
+CMakeFiles/space-invaders.dir/src/main.c.o: ../src/miniaudio.h
 
 CMakeFiles/space-invaders.dir/src/memory.c.o: ../src/memory.c
 CMakeFiles/space-invaders.dir/src/memory.c.o: ../src/memory.h
 
 CMakeFiles/space-invaders.dir/src/register_file.c.o: ../src/register_file.c
 CMakeFiles/space-invaders.dir/src/register_file.c.o: ../src/register_file.h
+
+CMakeFiles/space-invaders.dir/src/sound.c.o: ../src/miniaudio.h
+CMakeFiles/space-invaders.dir/src/sound.c.o: ../src/sound.c
+CMakeFiles/space-invaders.dir/src/sound.c.o: ../src/sound.h
 

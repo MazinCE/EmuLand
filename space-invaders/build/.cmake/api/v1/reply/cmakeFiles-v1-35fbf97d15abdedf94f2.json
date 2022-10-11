@@ -138,11 +138,6 @@
 		{
 			"isExternal" : true,
 			"path" : "/usr/lib/x86_64-linux-gnu/cmake/SDL2/sdl2-config.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/usr/share/cmake-3.18/Modules/FindGTK.cmake"
 		}
 	],
 	"kind" : "cmakeFiles",

@@ -93,12 +93,12 @@ clean: CMakeFiles/space-invaders.dir/clean
 CMakeFiles/space-invaders.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/space-invaders.dir/build.make CMakeFiles/space-invaders.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/space-invaders.dir/build.make CMakeFiles/space-invaders.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9 "Built target space-invaders"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10 "Built target space-invaders"
 .PHONY : CMakeFiles/space-invaders.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/space-invaders.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles 9
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles 10
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/space-invaders.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/mazin/Documents/dev/Emulators/space-invaders/build/CMakeFiles 0
 .PHONY : CMakeFiles/space-invaders.dir/rule

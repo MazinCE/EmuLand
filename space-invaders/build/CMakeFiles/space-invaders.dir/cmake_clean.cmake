@@ -7,6 +7,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/space-invaders.dir/src/main.c.o"
   "CMakeFiles/space-invaders.dir/src/memory.c.o"
   "CMakeFiles/space-invaders.dir/src/register_file.c.o"
+  "CMakeFiles/space-invaders.dir/src/sound.c.o"
   "space-invaders"
   "space-invaders.pdb"
 )

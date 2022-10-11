@@ -38,5 +38,10 @@
   "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
   "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/register_file.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.c",
   "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/register_file.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/space-invaders/build",
+  "command": "/bin/x86_64-linux-gnu-gcc-10  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/space-invaders.dir/src/sound.c.o -c /home/mazin/Documents/dev/Emulators/space-invaders/src/sound.c",
+  "file": "/home/mazin/Documents/dev/Emulators/space-invaders/src/sound.c"
 }
 ]
