@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/chip-8/build",
+  "command": "/usr/bin/cc  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/chip-8.dir/src/chip8.c.o -c /home/mazin/Documents/dev/Emulators/chip-8/src/chip8.c",
+  "file": "/home/mazin/Documents/dev/Emulators/chip-8/src/chip8.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/chip-8/build",
+  "command": "/usr/bin/cc  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/chip-8.dir/src/display.c.o -c /home/mazin/Documents/dev/Emulators/chip-8/src/display.c",
+  "file": "/home/mazin/Documents/dev/Emulators/chip-8/src/display.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/chip-8/build",
+  "command": "/usr/bin/cc  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/chip-8.dir/src/keypad.c.o -c /home/mazin/Documents/dev/Emulators/chip-8/src/keypad.c",
+  "file": "/home/mazin/Documents/dev/Emulators/chip-8/src/keypad.c"
+},
+{
+  "directory": "/home/mazin/Documents/dev/Emulators/chip-8/build",
+  "command": "/usr/bin/cc  -I/usr/include/SDL2 -Wall -Wextra -g -o CMakeFiles/chip-8.dir/src/main.c.o -c /home/mazin/Documents/dev/Emulators/chip-8/src/main.c",
+  "file": "/home/mazin/Documents/dev/Emulators/chip-8/src/main.c"
+}
+]

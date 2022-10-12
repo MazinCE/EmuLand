@@ -52,7 +52,6 @@ void Chip8_HandleInput(SDL_Event e)
 void Chip8_LogStatus(void)
 {
     CPU *cpu = &(g_Chip8.cpu);
-    ;
 
     printf("Chip8 Status:\n\n");
     printf("PC = $%04X\n", cpu->pc);
@@ -92,10 +91,9 @@ void Chip8_Fetch()
     CPU *cpu = &(g_Chip8.cpu);
     Memory *mem = &(g_Chip8.mem);
 
-    cpu->ir = (uint8_t)mem->program[cpu->pc];
+    cpu->ir = (uint8_t)mem->program[cpu->pc++];
     cpu->ir <<= 8;
-    cpu->ir |= (uint8_t)mem->program[cpu->pc + 1];
-    cpu->pc += 2;
+    cpu->ir |= (uint8_t)mem->program[cpu->pc++];
 }
 
 void Chip8_Execute()

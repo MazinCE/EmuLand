@@ -1,0 +1,44 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mazin/Documents/dev/Emulators/chip-8/src/chip8.c
+chip8.h
+/home/mazin/Documents/dev/Emulators/chip-8/src/chip8.h
+unistd.h
+-
+time.h
+-
+
+/home/mazin/Documents/dev/Emulators/chip-8/src/chip8.h
+stdint.h
+-
+display.h
+/home/mazin/Documents/dev/Emulators/chip-8/src/display.h
+keypad.h
+/home/mazin/Documents/dev/Emulators/chip-8/src/keypad.h
+
+/home/mazin/Documents/dev/Emulators/chip-8/src/display.h
+stdint.h
+-
+stdbool.h
+-
+SDL2/SDL.h
+-
+
+/home/mazin/Documents/dev/Emulators/chip-8/src/keypad.h
+stdint.h
+-
+SDL2/SDL.h
+-
+
+/home/mazin/Documents/dev/Emulators/chip-8/src/main.c
+chip8.h
+/home/mazin/Documents/dev/Emulators/chip-8/src/chip8.h
+time.h
+-
+
